@@ -588,7 +588,7 @@ let IS_ADMIN=false,ADM_ERR=null,ADM_N=0,LOGIN_FAIL=0,LOGIN_WAIT=0;
 const adminOK=()=>IS_ADMIN===true;
 async function refreshAdmin(){const n=++ADM_N;let ok=false;ADM_ERR=null;
  if(sb){try{const s=(await sb.auth.getSession()).data.session;ses=s||null;if(s){const r=await sb.rpc('is_admin');if(r&&r.error)ADM_ERR=r.error;ok=!!(r&&!r.error&&r.data===true)}}catch(e){ok=false}}
- if(n!==ADM_N)return IS_ADMIN;const was=IS_ADMIN;IS_ADMIN=ok;if(was!==ok)adminUi();return ok}
+ if(n!==ADM_N)return ok;const was=IS_ADMIN;IS_ADMIN=ok;if(was!==ok)adminUi();return ok}
 function adminUi(){const o=$('#ovA');if(!IS_ADMIN&&o&&o.classList.contains('show')&&!o.querySelector('[data-login],[data-pub]'))o.classList.remove('show');try{render()}catch(e){}try{shopApply()}catch(e){}}
 if(sb)try{sb.auth.onAuthStateChange((ev,sess)=>{ses=sess||null;if(ev==='SIGNED_OUT'){IS_ADMIN=false;setTimeout(adminUi,0)}else setTimeout(refreshAdmin,0)})}catch(e){}
 const loginLocked=()=>Date.now()<LOGIN_WAIT?Math.ceil((LOGIN_WAIT-Date.now())/1000):0;
