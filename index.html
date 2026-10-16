@@ -526,9 +526,9 @@ async function setSave(){const cur=cfgGet();let logo=lgClear?'':cur.logo;const b
   const c={on:$('#sOn').checked,dur:+$('#sDur').value,logo};if(sb){const r=await sb.from('settings').upsert({key:'splash',value:c});if(r.error)throw r.error}
   cfgSet(c);toast(sb?'Réglages enregistrés en ligne ✓':'Réglages gardés sur cet iPhone (démo)');openAdmin()}catch(e){btn.disabled=false;toast(errTxt(e))}}
 async function login(){if(!sb)return;const w=loginLocked();if(w)return toast('Trop d’essais. Réessaie dans '+w+' s');const em=$('#em').value.trim(),pw=$('#pw').value;if(!em||!pw)return toast('Renseigne ton e-mail et ton mot de passe');
- const r=await sb.auth.signInWithPassword({email:em,password:pw});$('#pw').value='';if(r.error){loginFailed();return toast('Connexion refusée')}
+ const r=await sb.auth.signInWithPassword({email:em,password:pw});$('#pw').value='';if(r.error){loginFailed();return toast('Connexion refusée ('+(r.error.message||r.error.status||'?')+')')}
  ses=r.data.session;const ok=await refreshAdmin();
- if(!ok){const cfgErr=!!ADM_ERR;try{await sb.auth.signOut()}catch(e){}ses=null;IS_ADMIN=false;if(!cfgErr)loginFailed();return toast(cfgErr?'Configuration de sécurité absente : exécute securite-admin.sql (guide)':'Connexion refusée')}
+ if(!ok){const cfgErr=!!ADM_ERR;try{await sb.auth.signOut()}catch(e){}ses=null;IS_ADMIN=false;if(!cfgErr)loginFailed();return toast(cfgErr?'Configuration de sécurité absente : exécute securite-admin.sql (guide)':'Connexion refusée : ce compte n’est pas administrateur')}
  LOGIN_FAIL=0;pendingOrder?openOrders(pendingOrder):openAdmin();pendingOrder=null}
 let pendingOrder=null;
 document.addEventListener('click',e=>{const t=e.target.closest('[data-send],[data-ord],[data-cus],[data-set],[data-lgpick],[data-lgdel],[data-setsave],[data-rn]');if(!t)return;const d=t.dataset;
