@@ -361,7 +361,8 @@ function openP(id){const p=products.find(x=>x.id===id);if(!p)return;$('#pS').inn
 function animPts(){const el=$('#pts'),to=S.pts,from=animPts.v==null?to:animPts.v;animPts.v=to;if(from===to){el.textContent='⭐ '+to+' pts';return}const t0=performance.now();el.classList.add('bump');(function s(t){const k=Math.min(1,(t-t0)/800);el.textContent='⭐ '+Math.round(from+(to-from)*k)+' pts';if(k<1)requestAnimationFrame(s);else el.classList.remove('bump')})(t0)}
 function burst(el){const r=el.getBoundingClientRect();for(let i=0;i<18;i++){const s=document.createElement('span'),a=Math.random()*6.28,d=60+Math.random()*100;s.textContent=['✨','💎','⭐','🔹'][i%4];s.className='bs';s.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;--x:${Math.cos(a)*d}px;--y:${Math.sin(a)*d}px`;document.body.appendChild(s);setTimeout(()=>s.remove(),1100)}}
 $('#aS').addEventListener('input',e=>{const k=e.target.dataset.k;if(k){RULES[k]=Math.max(0,+e.target.value||0);render()}});
-const sb=(CFG.url&&CFG.key&&window.supabase)?supabase.createClient(CFG.url,CFG.key):null;
+const CFG_OK=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(CFG.url||'')&&!/TON-PROJET|TA[-_]CLE/i.test((CFG.url||'')+(CFG.key||''))&&(CFG.key||'').length>20,
+ sb=(CFG_OK&&window.supabase)?supabase.createClient(CFG.url,CFG.key):null;
 let DB=sb?'wait':'demo',ses=null,edit=null,fotos=[],repIdx=0,selV='';
 const thumb=p=>p.ph&&p.ph[0]&&isVid(p.ph[0])?vthumb(p.ph[0]):p.ph&&p.ph[0]?`<img src='${esc(p.ph[0])}' alt='' loading='lazy'>`:`<span>${p.e||'🛍️'}</span>`;
 function lineOf(k){const[i,v]=String(k).split('~'),p=products.find(x=>x.id==i);return p?{...p,id:k,n:p.n+(v?' · '+v:''),vr:null}:null}
@@ -671,7 +672,7 @@ function ensurePass(){return validPass()?Promise.resolve(PASS.token):new Promise
 function startGate(ok,cancel){G.cb=ok;G.cancel=cancel||null;G.busy=false;$('.clg img').src=LOGO_SRC;$('#ccn').hidden=!cancel;$('#cdm').textContent=sb?'':'Démonstration visuelle : sans serveur, ce défi n\u2019est pas sécurisé.';$('#cap').classList.add('show');
  const p=$('.cpar');if(!p.children.length)for(let i=0;i<28;i++){const s=document.createElement('span'),z=2+Math.random()*3;s.style.cssText='left:'+Math.random()*100+'%;bottom:-10px;width:'+z+'px;height:'+z+'px;animation-duration:'+(6+Math.random()*8)+'s;animation-delay:-'+Math.random()*10+'s';p.appendChild(s)}
  capLoad()}
-function finishGate(ok){$('#cap').classList.remove('show');G.busy=false;const cb=G.cb,cn=G.cancel;G.cb=null;G.cancel=null;if(ok)cb&&cb(true);else if(cn)cn();else cb&&cb(false)}
+function finishGate(ok){$('#cap').classList.remove('show');G.busy=false;if(location.hash==='#admin')setTimeout(openAdmin,250);const cb=G.cb,cn=G.cancel;G.cb=null;G.cancel=null;if(ok)cb&&cb(true);else if(cn)cn();else cb&&cb(false)}
 async function capLoad(){const pz=$('#pz'),pc=$('#ppc');G.ch=null;G.busy=false;pz.className='pz ld';$('#cst').style.color='';$('#cst').textContent='Préparation du défi\u2026';$('#hd').style.left='3px';$('#trt').style.opacity=1;
  try{let d;if(sb){const r=await sb.functions.invoke('captcha',{body:{a:'new'}});if(r.error||!r.data||r.data.error)throw new Error((r.data&&r.data.error)||'réseau');d=r.data}
   else{const tx=Math.floor(85+Math.random()*150),ty=Math.floor(25+Math.random()*75),o=await capBuild(tx,ty);d={id:'demo',bg:o.bg,piece:o.piece,y:ty,tx}}
@@ -692,6 +693,7 @@ function introEnd(instant){const el=$('#intro'),app=$('#app'),mn=$('#main');if(F
  const open=()=>{app.hidden=false;if(!el||instant)return;app.classList.add('enter');mn.classList.remove('in');void mn.offsetWidth;mn.classList.add('in');setTimeout(()=>app.classList.remove('enter'),1000)};
  if(gateNeeded())startGate(open);else open();
  if(!el)return;if(instant){el.remove();return}el.classList.add('out');setTimeout(()=>el.remove(),1000)}
+addEventListener('hashchange',()=>{if(location.hash==='#admin')openAdmin()});
 /* Panneau admin (accordéon) */
 async function openAdmin(){
  if(!sb)return aShow("<span data-pub></span><h2>🔒 Administration indisponible</h2><p class='note'>L’espace propriétaire n’existe que lorsque la base de données est connectée (fichier config.js). Il n’y a aucun accès sans connexion.</p>");
