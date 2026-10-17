@@ -2041,6 +2041,11 @@ function shopIsClosed(){let c=false;try{c=!shopGet().open}catch(e){}
 function dotSync(){const d=document.querySelector('.rlw .dotg');if(!d)return;const c=shopIsClosed();d.style.background=c?'#ff3b4e':'#2ecc71';d.style.boxShadow=c?'0 0 8px #ff3b4e':'0 0 8px #2ecc71';d.title=c?'Boutique fermée':'Boutique ouverte'}
 setInterval(dotSync,3000);setTimeout(dotSync,300);
 
+/* ---- téléphone : 5 appuis rapides sur le logo = ouvre l'admin ---- */
+(function(){let n=0,t=0;document.addEventListener('click',e=>{const l=document.querySelector('header .rl');if(!l)return;const r=l.getBoundingClientRect();
+ if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){n=0;return}
+ const now=Date.now();n=(now-t<1500)?n+1:1;t=now;if(n>=5){n=0;try{openAdmin()}catch(x){}}},true)})();
+
 card=function(p,i){const out=p.st!=null&&p.st<=0,n=S.cart[p.id]||0,lw=p.st!=null&&p.st>0&&p.st<=5;return `<div class='card pc ${out?'oos':''}' data-open='${p.id}' style='animation-delay:${i*60}ms'><div class='pim'><div class='ph'>${thumb(p)}</div>${p.top?"<span class='tag'>⭐ TOP VENTE</span>":''}<button class='fav ${S.fav.includes(p.id)?'on':''}' data-fav='${p.id}'>♥</button>${out?"<span class='stk no'>0</span>":p.st!=null?`<span class='stk ${lw?'low':''}'>${p.st}</span>`:''}</div><h3>${esc(p.n)}</h3><small>${esc(p.c)}</small><div class='row'><b>${eur(p.p)}</b>${out?"<span class='hint' style='color:#ff6b8a'>Rupture</span>":n?`<div class='cstp' data-nopen><button data-q='${p.id}:-1'>−</button><b>${n}</b><button data-q='${p.id}:1'>+</button></div>`:`<button class='buy' data-add='${p.id}'>Ajouter</button>`}</div></div>`};
 (function(){const b=document.createElement('div');b.id='mini';b.setAttribute('role','button');b.dataset.v='cart';document.body.appendChild(b);
  window.updMini=function(){try{const c=cartCtx(),n=c.L.reduce((a,p)=>a+(S.cart[p.id]||0),0),on=n>0&&view!=='cart';document.body.classList.toggle('hasmini',on);if(on)b.innerHTML='<span>🛍️ <span>'+n+' '+(n===1?'article':'articles')+'</span> · <span>'+eur(c.T.tot)+'</span></span><span>Voir le panier ›</span>'}catch(e){}};
