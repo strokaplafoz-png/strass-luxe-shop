@@ -1552,7 +1552,7 @@ function inboxAdd(id,f,c,rows,MM){const a=inGet();a.unshift({id,name:f.cn,phone:
 function inSeed(){try{if(localStorage.getItem('sls_inbox_seed'))return;localStorage.setItem('sls_inbox_seed','1')}catch(e){return}const d=n=>new Date(Date.now()-n*36e5).toISOString();inSet([...inGet(),
  {id:'DEMO-A1',name:'Karim Benali',phone:'06 12 34 56 78',address:'12 rue des Lilas',zip:'67000',city:'Strasbourg',notes:'Sonner 2 fois',items:[{name:'Casquette Noire',q:2}],total:60,status:'nouvelle',created_at:d(1),demo:1},
  {id:'DEMO-B2',name:'Marie Dupont',phone:'07 98 76 54 32',address:'5 avenue de la Paix',zip:'68000',city:'Colmar',notes:'',items:[{name:'Montre Acier',q:1}],total:120,status:'expédiée',created_at:d(30),demo:1}])}
-async function inLoad(){if(sb){const r=await sb.from('orders').select('*').order('id',{ascending:false}).limit(200);if(r.error){toast(errTxt(r.error));return[]}return r.data.map(o=>({id:o.id,name:o.name,phone:o.phone,address:o.address,zip:o.zip,city:o.city,notes:o.notes||'',tg:o.tg_user||'',items:(o.items||[]).map(i=>({name:i.name+(i.variant?' ('+i.variant+')':''),q:i.q})),total:+o.total,status:o.status,created_at:o.created_at}))}inSeed();return inGet()}
+async function inLoad(){if(sb){const r=await sb.from('orders').select('*').order('id',{ascending:false}).limit(200);if(r.error){toast(errTxt(r.error));return[]}return r.data.map(o=>({id:o.id,name:o.name,phone:o.phone,address:o.address,zip:o.zip,city:o.city,notes:o.notes||'',tg:o.tg_user||'',items:(o.items||[]).map(i=>({name:i.name+(i.variant?' ('+i.variant+')':''),q:i.q})),total:+o.total,status:o.status,created_at:o.created_at,tgid:o.tg_id||null,tracking:o.tracking||'',carrier:o.carrier||''}))}inSeed();return inGet()}
 var IN={f:'all',q:'',l:[]};
 async function inboxOpen(focus){aShow('<h2>📥 Commandes reçues</h2><div class="sk"></div>');IN.l=await inLoad();inDraw(focus)}
 function inDraw(focus){const n=s=>IN.l.filter(o=>s==='all'||o.status===s).length,q=IN.q.toLowerCase(),L=IN.l.filter(o=>(IN.f==='all'||o.status===IN.f)&&(!q||(o.name+o.phone+o.id).toLowerCase().includes(q)));
@@ -2003,6 +2003,24 @@ async function kcWatch(){
   toast('Identité vérifiée ✓ Tu peux commander.')}
  catch(e){}}
 setInterval(kcWatch,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)kcWatch()});if(sb)setTimeout(kcWatch,2500);
+
+/* ---- numéro de suivi colis ---- */
+var TRK_C=[['colissimo','Colissimo'],['chronopost','Chronopost'],['mondial','Mondial Relay'],['ups','UPS'],['dhl','DHL'],['autre','Autre']];
+var _icT=inCard;
+inCard=function(o){const h=_icT(o),c=o.carrier||'colissimo';
+ const blk=`<div style="margin-top:8px;text-align:left;border-top:1px solid #2a2a2a;padding-top:8px"><b>📦 Numéro de suivi</b>${o.tracking?`<div class="note">Actuel : ${esc(o.tracking)}</div>`:''}<select data-trc="${esc(o.id)}">${TRK_C.map(x=>`<option value="${x[0]}" ${x[0]===c?'selected':''}>${x[1]}</option>`).join('')}</select><input data-trn="${esc(o.id)}" value="${esc(o.tracking||'')}" placeholder="Ex. 6A12345678901" maxlength="40" autocomplete="off"><button class="btn" style="margin-top:6px" data-trs="${esc(o.id)}">Enregistrer et prévenir le client</button></div>`;
+ const k=h.lastIndexOf('<button class="btn alt" style="margin-top:8px" data-incp');
+ return k<0?h:h.slice(0,k)+blk+h.slice(k)};
+async function inTrack(id){const o=IN.l.find(x=>String(x.id)===String(id));if(!o)return;
+ const car=document.querySelector('[data-trc="'+id+'"]').value,num=document.querySelector('[data-trn="'+id+'"]').value.trim().replace(/\s+/g,' ');
+ if(!/^[A-Za-z0-9 -]{4,40}$/.test(num))return toast('Numéro invalide : 4 à 40 lettres ou chiffres.');
+ if(o.status==='annulée')return toast('Commande annulée : pas de suivi.');
+ const up={carrier:car,tracking:num};if(['nouvelle','confirmée','payée','préparée'].includes(o.status))up.status='expédiée';
+ if(sb){const r=await sb.from('orders').update(up).eq('id',o.id);if(r.error)return toast(errTxt(r.error))}
+ else{const a=inGet(),x=a.find(y=>String(y.id)===String(id));if(x){Object.assign(x,up);inSet(a)}}
+ Object.assign(o,up);
+ toast(!sb?'Suivi enregistré ✓ (aperçu : aucun message envoyé)':o.tgid?'Suivi enregistré ✓ Client prévenu sur Telegram':'Suivi enregistré ✓ (ce client n’a pas Telegram : pas de message)');inDraw()}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-trs]');if(b)inTrack(b.dataset.trs)});
 
 card=function(p,i){const out=p.st!=null&&p.st<=0,n=S.cart[p.id]||0,lw=p.st!=null&&p.st>0&&p.st<=5;return `<div class='card pc ${out?'oos':''}' data-open='${p.id}' style='animation-delay:${i*60}ms'><div class='pim'><div class='ph'>${thumb(p)}</div>${p.top?"<span class='tag'>⭐ TOP VENTE</span>":''}<button class='fav ${S.fav.includes(p.id)?'on':''}' data-fav='${p.id}'>♥</button>${out?"<span class='stk no'>0</span>":p.st!=null?`<span class='stk ${lw?'low':''}'>${p.st}</span>`:''}</div><h3>${esc(p.n)}</h3><small>${esc(p.c)}</small><div class='row'><b>${eur(p.p)}</b>${out?"<span class='hint' style='color:#ff6b8a'>Rupture</span>":n?`<div class='cstp' data-nopen><button data-q='${p.id}:-1'>−</button><b>${n}</b><button data-q='${p.id}:1'>+</button></div>`:`<button class='buy' data-add='${p.id}'>Ajouter</button>`}</div></div>`};
 (function(){const b=document.createElement('div');b.id='mini';b.setAttribute('role','button');b.dataset.v='cart';document.body.appendChild(b);
