@@ -2101,7 +2101,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='19 oct. · 03h36 · Strass v2';
+var APP_V='19 oct. · 04h16 · Strass v2';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -2247,7 +2247,7 @@ nav button.bump span{display:inline-block;animation:cbdBounce .55s}
 .loy .st i img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
 .loy .okt{font-weight:800;margin-bottom:2px}
 /* fluidité : quand une fenêtre (admin, jeux…) est ouverte, tout ce qui bouge derrière est mis en pause */
-body.ovo :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-play-state:paused!important}
+body.ovo :not(.ov):not(.ov *):not(.ckov):not(.ckov *):not(#iaprev):not(#iaprev *):not(#leaves.pv):not(#leaves.pv *){animation-play-state:paused!important}
 /* mode léger (Telegram Desktop ou ?lite=1) : pas de flou en arrière-plan, animations de fond arrêtées */
 body.lite *,body.lite *::before,body.lite *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count:1!important}
