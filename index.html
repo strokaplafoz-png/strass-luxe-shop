@@ -2101,7 +2101,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='19 oct. · 19h25 · Strass visiteurs';
+var APP_V='19 oct. · 19h40 · Strass visiteurs';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3059,11 +3059,21 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  try{var sx=CSEC.find(function(x){return x.items.some(function(i){return i.k==='abd'})})||CSEC.find(function(x){return x.id==='fd'});
   if(sx&&!sx.items.some(function(i){return i.k===VID}))sx.items.unshift({k:VID,tg:1,def:1,ic:'👥',t:'Visiteurs de la boutique',d:'Voir qui a ouvert la boutique : nom Telegram, @pseudo, première et dernière visite, nombre de visites. Interrupteur = enregistrer ou non les visites.',f:[]})}catch(e){}
  /* ----- enregistrement d'une visite (une fois par ouverture, max toutes les 30 min) ----- */
- var SK='sls_vis';
- function send(){try{if(typeof sb==='undefined'||!sb||!tgi()||!on())return;
-  var last=0;try{last=+sessionStorage.getItem(SK)||0}catch(e){}if(Date.now()-last<30*60000)return;
+ var SK='sls_vis',ST={m:'Pas encore tenté sur cet appareil.',t:0};
+ function setSt(m){ST={m:m,t:Date.now()}}
+ async function errTxt(er){var t=String((er&&er.message)||er||'erreur');try{if(er&&er.context&&er.context.json){var j=await er.context.json();if(j&&j.error)t+=' — '+j.error}else if(er&&er.context&&er.context.status)t+=' (HTTP '+er.context.status+')'}catch(e){}return t.slice(0,200)}
+ async function send(force){try{
+  if(typeof sb==='undefined'||!sb){setSt('❌ Base non connectée dans l’appli.');return}
+  if(!tgi()){setSt('❌ Telegram n’a transmis aucune identité (la boutique n’est pas ouverte comme mini-app).');return}
+  if(!on()){setSt('⏸️ Désactivé (interrupteur de la ligne Visiteurs).');return}
+  var last=0;try{last=+sessionStorage.getItem(SK)||0}catch(e){}
+  if(!force&&Date.now()-last<30*60000){if(ST.t===0)setSt('✅ Déjà envoyé il y a moins de 30 min sur cet appareil.');return}
   try{sessionStorage.setItem(SK,String(Date.now()))}catch(e){}
-  Promise.resolve(sb.functions.invoke('cart',{body:{a:'visit',initData:tgi()}})).then(function(r){if(!r||r.error){try{sessionStorage.removeItem(SK)}catch(e){}}},function(){try{sessionStorage.removeItem(SK)}catch(e){}})}catch(e){}}
+  setSt('⏳ Envoi en cours…');
+  var r=await sb.functions.invoke('cart',{body:{a:'visit',initData:tgi()}});
+  if(!r||r.error){try{sessionStorage.removeItem(SK)}catch(e){}setSt('❌ Refusé par la fonction : '+await errTxt(r&&r.error));return}
+  var d=r.data||{};setSt(d.skipped?'⏸️ '+d.skipped:'✅ Visite envoyée et enregistrée.')}
+  catch(e){try{sessionStorage.removeItem(SK)}catch(x){}setSt('❌ Échec : '+await errTxt(e))}}
  setTimeout(send,3000);setTimeout(send,12000);document.addEventListener('visibilitychange',function(){if(!document.hidden)send()});
  window.__visSend=send;
  /* ----- écran admin ----- */
@@ -3080,10 +3090,11 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
    +'<p class="note" style="margin:0">'+V.length+' visiteur'+(V.length>1?'s':'')+' enregistré'+(V.length>1?'s':'')+(V.length>=300?' (les 300 derniers)':'')+'</p>'
    +(V.length?'<div class="vsl">'+V.map(function(x){var u=x.username?'<a href="https://t.me/'+encodeURIComponent(x.username)+'" target="_blank" rel="noopener" style="color:var(--glow)">@'+esc(x.username)+'</a>':'<span style="color:var(--mu)">pas de pseudo</span>';
      return '<div class="r"><div><b>'+esc(x.name||'Sans nom')+'</b><small>'+u+' · id '+esc(String(x.tg_id))+'</small><small>Vu pour la 1re fois '+esc(fd(x.first_seen))+' · dernière visite '+esc(fd(x.last_seen))+'</small></div><i>'+(+x.n||1)+' visite'+((+x.n||1)>1?'s':'')+'</i><button data-vsdel="'+esc(String(x.tg_id))+'" aria-label="Effacer">🗑️</button></div>'}).join('')+'</div>':'<p class="note">Personne pour l’instant. Les visites sont enregistrées quand quelqu’un ouvre la boutique dans Telegram.</p>')
+   +'<p class="note" style="text-align:left;font-size:12px">Cet appareil : '+esc(ST.m)+'</p><button class="btn alt" data-vstest>🔄 Tester l’envoi de ma visite maintenant</button>'
    +'<p class="note" style="text-align:left;font-size:12px">Seules les personnes qui ouvrent la boutique dans Telegram sont comptées. Les visites sont gardées 180 jours puis effacées. Pense à le mentionner dans ta politique de confidentialité. Le 🗑️ efface une personne.</p>';
-   aShow(h)}catch(e){aShow('<h2>👥 Visiteurs</h2><p class="note">Impossible de charger : '+esc(String((e&&e.message)||e).slice(0,120))+'<br>Vérifie que le SQL « 15-visiteurs » a été exécuté.</p>')}}
+   aShow(h)}catch(e){aShow('<h2>👥 Visiteurs</h2><p class="note">Impossible de charger : '+esc(String((e&&e.message)||e).slice(0,120))+'<br>Vérifie que le SQL « 15-visiteurs » a été exécuté.</p><p class="note" style="text-align:left;font-size:12px">Cet appareil : '+esc(ST.m)+'</p>')}}
  var _cf=cfgForm;cfgForm=function(k){if(k===VID){view();return}return _cf.apply(this,arguments)};
- document.addEventListener('click',async function(e){var d=e.target.closest&&e.target.closest('[data-vsdel]');if(!d||!IS_ADMIN)return;e.preventDefault();e.stopPropagation();
+ document.addEventListener('click',async function(e){var tt=e.target.closest&&e.target.closest('[data-vstest]');if(tt&&IS_ADMIN){e.preventDefault();e.stopPropagation();tt.disabled=true;tt.textContent='⏳ Envoi…';await send(true);await new Promise(function(r){setTimeout(r,600)});view();return}var d=e.target.closest&&e.target.closest('[data-vsdel]');if(!d||!IS_ADMIN)return;e.preventDefault();e.stopPropagation();
   if(!confirm('Effacer ce visiteur de la liste ?'))return;var id=d.dataset.vsdel;
   try{var x=await sb.from('visits').delete().eq('tg_id',id);if(x&&x.error)throw x.error;var y=await sb.from('visit_days').delete().eq('tg_id',id);if(y&&y.error)throw y.error;toast('Visiteur effacé.');view()}catch(er){toast('Échec : '+((er&&er.message)||er))}},true);
  window.__vis={view:view,on:on};
