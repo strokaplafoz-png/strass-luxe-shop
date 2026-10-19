@@ -2101,7 +2101,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='19 oct. · 04h16 · Strass v2';
+var APP_V='19 oct. · 04h40 · Strass v2';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -2992,7 +2992,11 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
    {n:'min',l:'Rappeler après … minutes sans commande',t:'num',d:30},
    {n:'hrs',l:'Ne pas redemander avant … heures (si « Plus tard »)',t:'num',d:6},
    {n:'ti',l:'Titre du rappel',t:'text',d:'Tu as oublié quelque chose !'},
-   {n:'msg',l:'Message',t:'text',d:'Des produits t’attendent dans ton panier. Reviens finaliser ta commande 🛒'}]})}catch(e){}
+   {n:'msg',l:'Message',t:'text',d:'Des produits t’attendent dans ton panier. Reviens finaliser ta commande 🛒'},
+   {n:'tgc',l:'📲 Rappel Telegram au client (le bot lui écrit) — nécessite la fonction « cart » et le minuteur',t:'chk',d:0},
+   {n:'tga',l:'🔔 Alerte Telegram pour moi quand un panier est abandonné',t:'chk',d:0},
+   {n:'tgh',l:'Envoyer le Telegram après … heures sans commande',t:'num',d:2},
+   {n:'tgt',l:'Message Telegram au client ({prenom} {articles} {total} sont remplacés)',t:'text',d:'Salut {prenom} 👋 Tu as laissé {articles} dans ton panier ({total}). Il t’attend 🛒'}]})}catch(e){}
  function C(){try{var v=cfgV(AID)||{};return{on:v.on!==false,min:Math.max(1,+v.min||30),hrs:Math.max(0,v.hrs===undefined||v.hrs===''?6:+v.hrs),ti:v.ti||'Tu as oublié quelque chose !',msg:v.msg||'Des produits t’attendent dans ton panier. Reviens finaliser ta commande 🛒'}}catch(e){return{on:true,min:30,hrs:6,ti:'Tu as oublié quelque chose !',msg:'Des produits t’attendent dans ton panier. Reviens finaliser ta commande 🛒'}}}
  function cnt(){try{return Object.keys(S.cart).reduce(function(a,k){return a+(S.cart[k]>0?S.cart[k]:0)},0)}catch(e){return 0}}
  function rd(k){try{return +localStorage.getItem(k)||0}catch(e){return 0}}
@@ -3019,6 +3023,17 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(check,800)});
  setInterval(check,20000);setTimeout(check,4000);window.__abdStamp=stamp;
  last=sig();if(cnt()&&!rd(TS))wr(TS,Date.now());
+ /* copie du panier envoyée au serveur (seulement si tu actives le rappel Telegram) : sert au rappel / à l'alerte */
+ var SN={last:null,fail:0};
+ function yes(x){return x===true||x==='true'||x===1||x==='1'}
+ function tgi(){try{return String((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData)||'')}catch(e){return''}}
+ function snapOn(){try{var v=cfgV(AID)||{};return yes(v.tgc)||yes(v.tga)}catch(e){return false}}
+ function snap(){try{if(typeof sb==='undefined'||!sb||!snapOn()||!tgi())return;if(SN.fail&&Date.now()-SN.fail<300000)return;
+  var it=Object.keys(S.cart).filter(function(k){return S.cart[k]>0}).map(function(k){var p=lineOf(k);return p?{n:p.n,q:S.cart[k],p:p.p}:null}).filter(Boolean),sg=JSON.stringify(it);
+  if(sg===SN.last)return;SN.last=sg;
+  Promise.resolve(sb.functions.invoke('cart',{body:{a:'snap',initData:tgi(),items:it,total:it.reduce(function(a,x){return a+x.p*x.q},0)}})).then(function(r){if(!r||r.error){SN.last=null;SN.fail=Date.now()}else SN.fail=0},function(){SN.last=null;SN.fail=Date.now()})}catch(e){}}
+ setInterval(snap,4000);setTimeout(snap,2500);document.addEventListener('visibilitychange',function(){if(document.hidden)snap()});
+ window.__abdSnap=snap;window.__abdSnapState=SN;
  window.__abd={check:check,due:due,cfg:C};
 })();
 </script>
