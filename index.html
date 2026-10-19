@@ -2101,7 +2101,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='19 oct. · 18h50 · Strass machine à sous';
+var APP_V='19 oct. · 19h25 · Strass visiteurs';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3035,6 +3035,58 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  setInterval(snap,4000);setTimeout(snap,2500);document.addEventListener('visibilitychange',function(){if(document.hidden)snap()});
  window.__abdSnap=snap;window.__abdSnapState=SN;
  window.__abd={check:check,due:due,cfg:C};
+})();
+</script>
+<style id="vscss">
+.vsk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.vsk div{background:var(--card2,#101a38);border:1px solid var(--bd,#23376e);border-radius:12px;padding:10px 4px;text-align:center}
+.vsk b{display:block;font-size:22px;color:var(--glow)}
+.vsk span{font-size:11px;color:var(--mu)}
+.vsl{display:flex;flex-direction:column;gap:6px;margin:10px 0;max-height:46vh;overflow:auto;text-align:left}
+.vsl .r{display:flex;align-items:center;gap:8px;background:var(--card2,#101a38);border:1px solid var(--bd,#23376e);border-radius:12px;padding:8px 10px;font-size:13px}
+.vsl .r div{flex:1;min-width:0}
+.vsl .r b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vsl .r small{color:var(--mu);font-size:11px}
+.vsl .r i{font-style:normal;font-size:12px;color:var(--glow);white-space:nowrap}
+.vsl .r button{background:none;border:0;color:var(--mu);font-size:16px}
+</style>
+<script>
+(function(){
+ var VID='visits';
+ function tgi(){try{return String((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData)||'')}catch(e){return''}}
+ function on(){try{return cfgV(VID).on!==false}catch(e){return true}}
+ /* ----- réglage admin ----- */
+ try{var sx=CSEC.find(function(x){return x.items.some(function(i){return i.k==='abd'})})||CSEC.find(function(x){return x.id==='fd'});
+  if(sx&&!sx.items.some(function(i){return i.k===VID}))sx.items.unshift({k:VID,tg:1,def:1,ic:'👥',t:'Visiteurs de la boutique',d:'Voir qui a ouvert la boutique : nom Telegram, @pseudo, première et dernière visite, nombre de visites. Interrupteur = enregistrer ou non les visites.',f:[]})}catch(e){}
+ /* ----- enregistrement d'une visite (une fois par ouverture, max toutes les 30 min) ----- */
+ var SK='sls_vis';
+ function send(){try{if(typeof sb==='undefined'||!sb||!tgi()||!on())return;
+  var last=0;try{last=+sessionStorage.getItem(SK)||0}catch(e){}if(Date.now()-last<30*60000)return;
+  try{sessionStorage.setItem(SK,String(Date.now()))}catch(e){}
+  Promise.resolve(sb.functions.invoke('cart',{body:{a:'visit',initData:tgi()}})).then(function(r){if(!r||r.error){try{sessionStorage.removeItem(SK)}catch(e){}}},function(){try{sessionStorage.removeItem(SK)}catch(e){}})}catch(e){}}
+ setTimeout(send,3000);setTimeout(send,12000);document.addEventListener('visibilitychange',function(){if(!document.hidden)send()});
+ window.__visSend=send;
+ /* ----- écran admin ----- */
+ function fd(t){try{return new Date(t).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch(e){return''}}
+ function ymd(d){return d.toISOString().slice(0,10)}
+ async function view(){if(!IS_ADMIN)return;aShow('<h2>👥 Visiteurs</h2><p class="note">Chargement…</p>');
+  try{if(!sb)throw new Error('Base non connectée');
+   var a=await sb.from('visits').select('*').order('last_seen',{ascending:false}).limit(300);if(a.error)throw a.error;
+   var since=ymd(new Date(Date.now()-30*86400000));
+   var b=await sb.from('visit_days').select('tg_id,day').gte('day',since).limit(20000);if(b.error)throw b.error;
+   var V=a.data||[],D=b.data||[],t0=ymd(new Date()),t7=ymd(new Date(Date.now()-6*86400000));
+   function uniq(from){var s={};D.forEach(function(x){if(x.day>=from)s[x.tg_id]=1});return Object.keys(s).length}
+   var h='<h2>👥 Visiteurs</h2><div class="vsk"><div><b>'+uniq(t0)+'</b><span>aujourd’hui</span></div><div><b>'+uniq(t7)+'</b><span>7 derniers jours</span></div><div><b>'+uniq(since)+'</b><span>30 derniers jours</span></div></div>'
+   +'<p class="note" style="margin:0">'+V.length+' visiteur'+(V.length>1?'s':'')+' enregistré'+(V.length>1?'s':'')+(V.length>=300?' (les 300 derniers)':'')+'</p>'
+   +(V.length?'<div class="vsl">'+V.map(function(x){var u=x.username?'<a href="https://t.me/'+encodeURIComponent(x.username)+'" target="_blank" rel="noopener" style="color:var(--glow)">@'+esc(x.username)+'</a>':'<span style="color:var(--mu)">pas de pseudo</span>';
+     return '<div class="r"><div><b>'+esc(x.name||'Sans nom')+'</b><small>'+u+' · id '+esc(String(x.tg_id))+'</small><small>Vu pour la 1re fois '+esc(fd(x.first_seen))+' · dernière visite '+esc(fd(x.last_seen))+'</small></div><i>'+(+x.n||1)+' visite'+((+x.n||1)>1?'s':'')+'</i><button data-vsdel="'+esc(String(x.tg_id))+'" aria-label="Effacer">🗑️</button></div>'}).join('')+'</div>':'<p class="note">Personne pour l’instant. Les visites sont enregistrées quand quelqu’un ouvre la boutique dans Telegram.</p>')
+   +'<p class="note" style="text-align:left;font-size:12px">Seules les personnes qui ouvrent la boutique dans Telegram sont comptées. Les visites sont gardées 180 jours puis effacées. Pense à le mentionner dans ta politique de confidentialité. Le 🗑️ efface une personne.</p>';
+   aShow(h)}catch(e){aShow('<h2>👥 Visiteurs</h2><p class="note">Impossible de charger : '+esc(String((e&&e.message)||e).slice(0,120))+'<br>Vérifie que le SQL « 15-visiteurs » a été exécuté.</p>')}}
+ var _cf=cfgForm;cfgForm=function(k){if(k===VID){view();return}return _cf.apply(this,arguments)};
+ document.addEventListener('click',async function(e){var d=e.target.closest&&e.target.closest('[data-vsdel]');if(!d||!IS_ADMIN)return;e.preventDefault();e.stopPropagation();
+  if(!confirm('Effacer ce visiteur de la liste ?'))return;var id=d.dataset.vsdel;
+  try{var x=await sb.from('visits').delete().eq('tg_id',id);if(x&&x.error)throw x.error;var y=await sb.from('visit_days').delete().eq('tg_id',id);if(y&&y.error)throw y.error;toast('Visiteur effacé.');view()}catch(er){toast('Échec : '+((er&&er.message)||er))}},true);
+ window.__vis={view:view,on:on};
 })();
 </script>
 <style id="ps-css">
