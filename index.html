@@ -2101,7 +2101,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='19 oct. · 04h40 · Strass v2';
+var APP_V='19 oct. · 18h20 · Strass machine à sous';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3386,6 +3386,107 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  ['Ouvre la boutique depuis Telegram pour utiliser le chat.',['Open the shop from Telegram to use the chat.','Abre la tienda desde Telegram para usar el chat.','Öffne den Shop über Telegram, um den Chat zu nutzen.','افتح المتجر من تيليجرام لاستخدام الدردشة.']]
  ];
  E.forEach(function(e){I18N_DICT[i18nNK(e[0])]=e[1]});
+})();
+</script>
+<style id="slcss">
+#ovSL .sheet{text-align:center}
+#ovSL h2{margin:2px 0 4px}
+.slhud{display:flex;justify-content:space-between;max-width:320px;margin:8px auto 0;font-weight:800;font-size:15px}
+.slhud b{color:var(--glow)}
+.slm{position:relative;margin:12px auto;max-width:320px;padding:16px 14px 14px;border-radius:22px;background:linear-gradient(160deg,#1a2a66,#0b1230);border:2px solid var(--blue);box-shadow:0 0 24px rgba(47,107,255,.35),inset 0 0 18px rgba(0,0,0,.5)}
+.slm.win{animation:slw .5s 4 alternate}
+@keyframes slw{from{box-shadow:0 0 24px rgba(246,200,76,.3)}to{box-shadow:0 0 44px rgba(246,200,76,.95)}}
+.slr{display:flex;gap:8px;justify-content:center}
+.slw{width:84px;height:96px;overflow:hidden;border-radius:12px;background:linear-gradient(#e9eefb,#fff 30%,#fff 70%,#dfe6f7);position:relative;box-shadow:inset 0 6px 10px rgba(0,0,0,.35),inset 0 -6px 10px rgba(0,0,0,.35)}
+.sls{display:flex;flex-direction:column;will-change:transform}
+.sls i{display:flex;align-items:center;justify-content:center;height:96px;font-size:50px;font-style:normal}
+.sls i img{width:70px;height:70px;object-fit:cover;border-radius:12px}
+.slln{position:absolute;left:8px;right:8px;top:50%;height:2px;margin-top:-1px;background:rgba(224,64,64,.6);pointer-events:none;border-radius:2px}
+#slgo{margin-top:12px;width:100%;padding:13px;border-radius:14px;border:0;font-weight:800;font-size:17px;background:linear-gradient(135deg,#f6c84c,#e8912a);color:#2b1a00}
+#slgo[disabled]{opacity:.5}
+#slr2{margin:8px 0;min-height:20px}
+#sls2{position:absolute;inset:0;border-radius:20px;background:rgba(3,6,18,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px;font-weight:700}
+#sls2.hid{display:none}
+#sls2 small{font-weight:400;color:var(--mu);font-size:13px}
+</style>
+<script>
+(function(){
+ var ID='slot',SH=96;
+ var DEF_LOTS='Perdu | 50\n−5 % | 25\n−10 % | 12\nLivraison offerte | 8\n+20 points | 5';
+ try{var sx=CSEC.find(function(x){return x.id==='fd'});
+  if(sx&&!sx.items.some(function(i){return i.k===ID}))sx.items.unshift({k:ID,tg:1,def:1,ic:'🎰',t:'Machine à sous',d:'Jeu de casino : 3 rouleaux avec tes produits. 3 symboles identiques = un lot. Une partie par jour (réglable). Les chances se règlent avec la liste des lots.',f:[
+   {n:'title',l:'Titre du jeu',t:'text',d:'La machine à sous'},
+   {n:'btn',l:'Texte du bouton sur l’accueil',t:'text',d:'Machine à sous'},
+   {n:'lots',l:'Lots (un par ligne : lot | chance | produit gagnant). Le produit est facultatif : écris son nom comme dans ta boutique ou un emoji. Ex : −10 % | 12 | Casquette. « Perdu | 50 » = pas de gain.',t:'lines',d:DEF_LOTS},
+   {n:'syms',l:'Produits affichés sur les rouleaux (un par ligne : le nom d’un produit de ta boutique ou un emoji). Vide = tes produits au hasard.',t:'lines',d:''},
+   {n:'tries',l:'Nombre de lancers par partie',t:'num',d:1},
+   {n:'cd',l:'Une partie tous les … jours',t:'num',d:1}]})}catch(e){}
+ function C(){var v={};try{v=cfgV(ID)||{}}catch(e){}
+  return{on:v.on!==false,title:String(v.title||'La machine à sous'),btn:String(v.btn||'Machine à sous'),syms:String(v.syms||''),lots:v.lots===undefined||String(v.lots).trim()===''?DEF_LOTS:String(v.lots),tries:Math.max(1,Math.min(9,Math.round(+v.tries||1))),cd:Math.max(1,Math.round(+v.cd||1))}}
+ function lotOf(n){var a=String(n).trim(),t='none',v=0;if(/^perdu|^rien|^vide/i.test(a))t='none';else if(/%/.test(a)){t='pct';v=parseFloat(a.replace(/[^\d.]/g,''))||0}else if(/€/.test(a)){t='eur';v=parseFloat(a.replace(/[^\d.]/g,''))||0}else if(/livraison/i.test(a))t='ship';else if(/point/i.test(a)){t='pts';v=parseFloat(a.replace(/[^\d.]/g,''))||0}else t='gift';return{l:a,t:t,v:v}}
+ function pool(){var o=[];C().lots.split(/\n/).forEach(function(l,i){var p=l.split('|'),n=p[0].trim(),w=p.length>1?Math.max(0,parseFloat(p[1].replace(/[^\d.]/g,''))||0):10;if(n&&w>0)o.push({r:lotOf(n),w:w,sym:(p[2]||'').trim()})});if(!o.length)o.push({r:lotOf('−5 %'),w:1,sym:''});return o}
+ function RND(){return window.__slRand?window.__slRand():Math.random()}
+ function pick(P){var t=P.reduce(function(a,x){return a+x.w},0),x=RND()*t,i;for(i=0;i<P.length;i++){x-=P[i].w;if(x<0)return i}return 0}
+ function allowed(){var c=C();try{var last=S.play&&S.play.L;if(!last)return true;return(Date.parse(today())-Date.parse(last))/864e5>=c.cd}catch(e){return true}}
+ function norm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()}
+ function prod(p){var u=(p.ph&&p.ph[0])||'';if(u&&typeof u!=='string')u=u.url||u.u||'';if(typeof u==='string'&&/^(https?:|data:image|\/)/.test(u))return{k:'p:'+p.id,h:'<img src="'+esc(u)+'" alt="">'};if(p.e)return{k:'e:'+p.e,h:esc(p.e)};return{k:'p:'+p.id,h:'🎁'}}
+ function symOf(str){str=String(str||'').trim();if(!str)return null;var q=norm(str),p=null;try{p=products.find(function(x){return norm(x.n)===q})||products.find(function(x){return norm(x.n).indexOf(q)>=0})}catch(e){}if(p)return prod(p);return{k:'t:'+str,h:esc(Array.from(str).slice(0,3).join(''))}}
+ /* symboles + lots : chaque lot gagnant a son produit */
+ function setup(){var P=pool(),list=[],seen={};function add(o){if(o&&!seen[o.k]){seen[o.k]=1;list.push(o)}return o}
+  P.forEach(function(x){x.s=x.sym?add(symOf(x.sym)):null});
+  C().syms.split(/\n/).forEach(function(l){add(symOf(l))});
+  if(list.length<4){try{products.forEach(function(p){if(list.length<6)add(prod(p))})}catch(e){}}
+  ['💍','👑','💎','🎁','⭐','🍀'].forEach(function(e){if(list.length<4)add({k:'t:'+e,h:e})});
+  P.forEach(function(x,i){if(x.r.t!=='none'&&!x.s){var f=list.find(function(sy){return !P.some(function(y){return y.s&&y.s.k===sy.k})});x.s=f||list[i%list.length]}});
+  return{P:P,SY:list}}
+ function layout(){try{var g=document.querySelector('.games');if(!g)return;var b=g.querySelectorAll('.mzb');b.forEach(function(x){x.style.gridColumn=b.length===1?'1/-1':''})}catch(e){}}
+ function inject(){try{var g=document.querySelector('.games'),c=C(),b=g&&g.querySelector('[data-g="L"]');
+  if(!g)return;if(!c.on){if(b){b.remove();layout()}return}
+  if(!b){b=document.createElement('button');b.className='game mzb';b.setAttribute('data-g','L');b.innerHTML='<span>🎰</span><i></i>';g.appendChild(b)}
+  var i=b.querySelector('i');if(i&&i.textContent!==c.btn)i.textContent=c.btn;if(i)i.style.fontStyle='normal';layout()}catch(e){}}
+ var _rd=render;render=function(){var r=_rd.apply(this,arguments);inject();return r};
+ var _ca=cfgApply;cfgApply=function(){var r=_ca.apply(this,arguments);inject();return r};
+ var G=null,CUR=[null,null,null],SY=[];
+ function build(){var o=document.getElementById('ovSL');if(o)return o;o=document.createElement('div');o.className='ov';o.id='ovSL';
+  o.innerHTML='<div class="sheet"><button class="x" data-close>✕</button><h2 id="slt">🎰</h2><p class="note" style="margin:0">Appuie sur « Lancer » : 3 symboles identiques = un cadeau !</p><div class="slhud"><span>Lancers <b id="sltr">1</b></span></div><div class="slm" id="slm"><div class="slr"><div class="slw"><div class="sls"></div><div class="slln"></div></div><div class="slw"><div class="sls"></div><div class="slln"></div></div><div class="slw"><div class="sls"></div><div class="slln"></div></div></div><button id="slgo">🎰 Lancer !</button><div id="sls2" class="hid"></div></div><div class="res" id="slr2"></div><button class="btn alt" id="sladm" style="display:none">🧪 Test admin (sans lot, illimité)</button><p class="note" id="sln"></p></div>';
+  document.body.appendChild(o);o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('show')});return o}
+ function ov(h){var s=document.getElementById('sls2');if(!s)return;if(!h){s.className='hid';s.innerHTML='';return}s.className='';s.innerHTML=h}
+ function strip(i,items,off){var s=document.querySelectorAll('#ovSL .sls')[i];s.style.transition='none';s.style.transform='translateY('+(off||0)+'px)';s.innerHTML=items.map(function(e){return'<i>'+e.h+'</i>'}).join('')}
+ function open(){var c=C(),o=build();SY=setup().SY;o.classList.add('show');
+  document.getElementById('slt').textContent='🎰 '+T(c.title);
+  var adm=document.getElementById('sladm');adm.style.display=(typeof IS_ADMIN!=='undefined'&&IS_ADMIN)?'block':'none';adm.onclick=function(){begin(true)};
+  document.getElementById('sln').textContent=T('Une partie tous les '+c.cd+' jour(s)')+' · '+c.tries+' '+T('lancers');
+  document.getElementById('slr2').innerHTML='';document.getElementById('sltr').textContent=c.tries;
+  for(var i=0;i<3;i++){CUR[i]=SY[(i*2)%SY.length];strip(i,[CUR[i]])}
+  G=null;document.getElementById('slm').classList.remove('win');btn(true);
+  if(allowed()){ov('<div style="font-size:34px">🎰</div><div>'+esc(T('Prêt à tenter ta chance ?'))+'</div><small>'+esc(T('Une seule partie : 3 symboles identiques = un cadeau.'))+'</small><button class="btn" id="slgo2" style="margin-top:6px;width:auto;padding:10px 22px">▶ '+esc(T('Jouer'))+'</button>');document.getElementById('slgo2').onclick=function(){begin(false)}}
+  else ov('<div style="font-size:34px">🌙</div><div>'+esc(T('Reviens demain 🌙'))+'</div><small>'+esc(T('Tu as déjà joué. Une nouvelle partie bientôt !'))+'</small>')}
+ function btn(d){var b=document.getElementById('slgo');if(b)b.disabled=!!d}
+ function begin(practice){var c=C();var st=setup();SY=st.SY;G={c:c,practice:practice,tries:c.tries,busy:false,over:false,P:st.P};ov('');
+  if(!practice){try{S.play=S.play||{};S.play.L=today();save()}catch(e){}}
+  document.getElementById('sltr').textContent=G.tries;document.getElementById('slr2').innerHTML='';document.getElementById('slm').classList.remove('win');btn(false)}
+ function spin(){if(!G||G.busy||G.over)return;G.busy=true;btn(true);G.tries--;document.getElementById('sltr').textContent=G.tries;document.getElementById('slm').classList.remove('win');
+  var idx=pick(G.P),lot=G.P[idx].r,win=lot.t!=='none',fin;
+  if(win){var s=G.P[idx].s;fin=[s,s,s]}else{var tr=0;do{fin=[0,1,2].map(function(){return SY[Math.floor(Math.random()*SY.length)%SY.length]});tr++}while(fin[0].k===fin[1].k&&fin[1].k===fin[2].k&&tr<50);if(fin[0].k===fin[1].k&&fin[1].k===fin[2].k)fin[2]=SY[(SY.indexOf(fin[2])+1)%SY.length]}
+  G.fin=fin;G.lot=lot;
+  for(var i=0;i<3;i++){var items=[CUR[i]],n=18+i*6;for(var k=0;k<n;k++)items.push(SY[Math.floor(Math.random()*SY.length)]);items.push(fin[i]);strip(i,items,0);(function(i,n){var s=document.querySelectorAll('#ovSL .sls')[i];void s.offsetHeight;s.style.transition='transform '+(1.4+i*.6)+'s cubic-bezier(.15,.7,.2,1)';s.style.transform='translateY('+(-(n+1)*SH)+'px)'})(i,n);CUR[i]=fin[i]}
+  G.timer=setTimeout(done,(1.4+2*.6)*1000+150)}
+ function done(){if(!G)return;G.busy=false;var lot=G.lot;
+  if(lot.t!=='none'){document.getElementById('slm').classList.add('win');finish(lot);return}
+  if(G.tries>0){btn(false);try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}else finish(null)}
+ function finish(r){if(!G||G.over)return;G.over=true;btn(true);var pr=G.practice,code=null,h;
+  if(r){if(!pr){try{code=window.win?window.win(r):null}catch(e){}}h='<div style="font-size:34px">🎁</div><div class="pop">🎉 '+esc(r.l)+' !</div>'+(pr?'<small>'+esc(T('Test admin : aucun lot donné.'))+'</small>':code?'<div><span class="code">'+code+'</span></div><small>'+esc(T('Ajouté à ton panier et à ton profil'))+'</small>':'<small>'+esc(T('Récompense ajoutée à ton solde ✓'))+'</small>')}
+  else h='<div style="font-size:30px">😅</div><div>'+esc(T('Pas de chance cette fois.'))+'</div><small>'+esc(T('Retente bientôt !'))+'</small>';
+  setTimeout(function(){var q=document.getElementById('slr2');if(q)q.innerHTML=h;try{if(r&&typeof burst==='function')burst(document.getElementById('slm'))}catch(e){}},r?900:300)}
+ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-g="L"]');if(b){e.preventDefault();e.stopPropagation();open();return}if(e.target&&e.target.id==='slgo'){e.preventDefault();e.stopPropagation();spin()}},true);
+ try{[['Appuie sur « Lancer » : 3 symboles identiques = un cadeau !',['Press “Spin”: 3 identical symbols = a gift!','Pulsa «Lanzar»: ¡3 símbolos iguales = un regalo!','Drücke „Drehen“: 3 gleiche Symbole = ein Geschenk!','اضغط «تدوير»: 3 رموز متطابقة = هدية!']],
+  ['🎰 Lancer !',['🎰 Spin!','🎰 ¡Lanzar!','🎰 Drehen!','🎰 !دوّر']],['Lancers',['Spins','Lanzamientos','Drehungen','اللفّات']],['lancers',['spins','lanzamientos','Drehungen','لفّات']],['Machine à sous',['Slot machine','Tragaperras','Spielautomat','ماكينة الحظ']],
+  ['Prêt à tenter ta chance ?',['Ready to try your luck?','¿Listo para probar suerte?','Bereit dein Glück zu versuchen?','هل أنت مستعد لتجربة حظك؟']],
+  ['Une seule partie : 3 symboles identiques = un cadeau.',['One game only: 3 identical symbols = a gift.','Una sola partida: 3 símbolos iguales = un regalo.','Nur eine Runde: 3 gleiche Symbole = ein Geschenk.','جولة واحدة: 3 رموز متطابقة = هدية.']],
+  ['Pas de chance cette fois.',['No luck this time.','Sin suerte esta vez.','Diesmal kein Glück.','لا حظ هذه المرة.']]
+ ].forEach(function(e){I18N_DICT[i18nNK(e[0])]=e[1]})}catch(e){}
+ inject();setTimeout(inject,1500);
+ window.__sl={open:open,begin:begin,spin:spin,state:function(){return G},allowed:allowed,pool:pool,setup:setup,C:C};
 })();
 </script>
 <script>
