@@ -2101,7 +2101,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='19 oct. · 19h40 · Strass visiteurs';
+var APP_V='19 oct. · 20h15 · Strass visiteurs';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3071,9 +3071,19 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   try{sessionStorage.setItem(SK,String(Date.now()))}catch(e){}
   setSt('⏳ Envoi en cours…');
   var r=await sb.functions.invoke('cart',{body:{a:'visit',initData:tgi()}});
-  if(!r||r.error){try{sessionStorage.removeItem(SK)}catch(e){}setSt('❌ Refusé par la fonction : '+await errTxt(r&&r.error));return}
-  var d=r.data||{};setSt(d.skipped?'⏸️ '+d.skipped:'✅ Visite envoyée et enregistrée.')}
+  if(r&&!r.error){var d=r.data||{};setSt(d.skipped?'⏸️ '+d.skipped:'✅ Visite envoyée et enregistrée.');return}
+  var e1=await errTxt(r&&r.error);
+  /* méthode de secours : requête « simple » (sans vérification préalable du navigateur) */
+  var f=await viaFetch();
+  if(f.ok){setSt(f.skipped?'⏸️ '+f.skipped:'✅ Visite envoyée (méthode de secours). Méthode normale en échec : '+e1);return}
+  try{sessionStorage.removeItem(SK)}catch(x){}
+  setSt('❌ Méthode normale : '+e1+' · Méthode de secours : '+f.m)}
   catch(e){try{sessionStorage.removeItem(SK)}catch(x){}setSt('❌ Échec : '+await errTxt(e))}}
+ async function viaFetch(){try{var u=String(sb.supabaseUrl||'').replace(/\/+$/,''),k=String(sb.supabaseKey||'');if(!u)return{ok:false,m:'adresse inconnue'};
+  var c=new AbortController(),tm=setTimeout(function(){c.abort()},12000);
+  var res=await fetch(u+'/functions/v1/cart?apikey='+encodeURIComponent(k),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({a:'visit',initData:tgi()}),signal:c.signal});clearTimeout(tm);
+  var j={};try{j=await res.json()}catch(e){}
+  if(res.ok)return{ok:true,skipped:j.skipped};return{ok:false,m:'HTTP '+res.status+(j&&(j.error||j.message)?' — '+String(j.error||j.message).slice(0,120):'')}}catch(e){return{ok:false,m:String((e&&e.message)||e).slice(0,120)}}}
  setTimeout(send,3000);setTimeout(send,12000);document.addEventListener('visibilitychange',function(){if(!document.hidden)send()});
  window.__visSend=send;
  /* ----- écran admin ----- */
