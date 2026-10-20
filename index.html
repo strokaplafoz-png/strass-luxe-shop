@@ -336,7 +336,7 @@ function render(){
   h=`<h2>Mes favoris</h2>${l.length?`<div class="grid">${l.map(card).join('')}</div>`:'<p class="empty">Aucun favori pour l’instant.<br>Touche ❤️ sur un produit.</p>'}`;
  }else if(view==='cart'){
   const it=Object.keys(S.cart).filter(k=>S.cart[k]>0).map(k=>lineOf(k)).filter(Boolean),sub=it.reduce((a,p)=>a+p.p*S.cart[p.id],0),W=S.wallet.map((w,i)=>[w,i]).filter(x=>ok(x[0])),cw=S.wallet[S.promo],T=cartT(sub,cw&&ok(cw)&&sub>=(cw.min!=null?cw.min:RULES.minOrder)?cw.r:null);
-  h='<h2>Mon panier</h2>'+(it.length?it.map(p=>`<div class="line"><div class="ph">${thumb(p)}</div><div>${esc(p.n)}<br><b>${eur(p.p)}</b></div><div class="qty"><button data-q="${p.id}:-1">−</button> ${S.cart[p.id]} <button data-q="${p.id}:1">+</button></div></div>`).join('')
+  h='<h2>Mon panier</h2>'+(it.length?it.map(p=>`<div class="line"><div class="ph">${thumb(p)}</div><div>${esc(p.n)}<br><b>${eur(p.p)}</b>${typeof loyTag==='function'?loyTag(p):''}</div><div class="qty"><button data-q="${p.id}:-1">−</button> ${S.cart[p.id]} <button data-q="${p.id}:1">+</button></div></div>`).join('')
   +(typeof loyCart==='function'?loyCart():'')+`<div class="box"><b style="font-size:14px">🎁 Mes codes promo (1 par commande · min. ${RULES.minOrder} € · valables ${RULES.valid} j)</b><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">${W.length?W.map(([w,i])=>`<button class="cat ${i===S.promo?'on':''}" data-pr="${i}">${w.code} · ${esc(w.r.l)}</button>`).join(''):'<span class="note">Aucun code disponible. Joue pour en gagner !</span>'}</div><div style="display:flex;gap:8px;margin-top:10px"><input id="pcIn" placeholder="Tape un code promo" autocapitalize="characters" autocomplete="off" maxlength="30" style="flex:1;min-width:0"><button class="btn alt" data-pcapply style="width:auto;padding:0 16px;margin:0">Appliquer</button></div></div>
   <div class="box"><div class="tot"><span>Sous-total</span><span>${eur(sub)}</span></div><div class="tot"><span>Réduction</span><span>-${eur(T.disc)}</span></div><div class="tot"><span>${ocDelLabel()}</span><span>${T.del?eur(T.del):'Offerte'}</span></div><div class="tot big"><span>Total</span><span>${eur(T.tot)}</span></div></div>
   ${shopBlocksOrder()?'<div class="box note">🔴 Boutique fermée : les commandes sont suspendues'+esc(reopenTxt())+'</div>':ocMinBox(sub)+'<button class="btn" data-order>Valider la commande</button>'}${sb?'<p class="note">Aucun paiement en ligne : ta commande est envoyée au vendeur.</p>':'<p class="note">Mode démo : la commande n’est pas envoyée, elle est seulement notée sur cet iPhone.</p>'}`:'<div class="empty">🛍️<br>Ton panier est vide<br><button class="btn" data-v="cats">Découvrir la boutique</button></div>');
@@ -607,7 +607,7 @@ async function sendOrder(){if($('#hp')&&$('#hp').value)return;if(Date.now()-(win
  try{localStorage.setItem('sls_adr',JSON.stringify({n,ph,ad,z,c:ct}))}catch(e){}
  try{let id;
   if(sb){const u=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user)||{};
-   const tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');const r=await sb.rpc('create_order_v2',{p:{token:tok,name:n,phone:ph,address:ad,zip:z,city:ct,notes:v('cx'),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:'')}});
+   const tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');const r=await sb.rpc('create_order_v2',{p:{token:tok,name:n,phone:ph,address:ad,zip:z,city:ct,notes:v('cx'),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:'')}});
    if(r.error){if(/anti-robot/i.test(r.error.message))clearPass();throw r.error}clearPass();id=r.data}else id='DEMO-'+Math.random().toString(36).slice(2,6).toUpperCase();
   if(c.pr)c.pr.used=true;S.orders.unshift({id:'CMD-'+id,d:new Date().toLocaleDateString(LOC()),t:Date.now(),L:c.L.map(p=>({n:p.n,q:S.cart[p.id],p:p.p})),tot:c.T.tot});
   S.pts+=Math.floor(c.T.tot);S.cart={};S.promo=-1;save();render();
@@ -879,7 +879,7 @@ async function sendOrder(){
  if(!MM)try{localStorage.setItem('sls_adr',JSON.stringify({n:f.cn,ph:f.cp,ad:f.ca,z:f.cz,c:f.cv,y:f.cy}))}catch(e){}
  try{let id;
   if(sb){const u=TGU(),tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');
-   const r=await sb.rpc('create_order_v2',{p:{token:tok,name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:(v('cx')+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}});
+   const r=await sb.rpc('create_order_v2',{p:{token:tok,name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:(v('cx')+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}});
    if(r.error){if(/anti-robot/i.test(r.error.message))clearPass();throw r.error}clearPass();id=r.data}
   else id='DEMO-'+Math.random().toString(36).slice(2,6).toUpperCase();
   const rows=c.L.map(p=>({n:p.n,q:S.cart[p.id],p:p.p,t:thumb(p)}));
@@ -2005,7 +2005,7 @@ document.addEventListener('click',async e=>{if(!sb)return;const t=e.target.close
 var KCORD=null;
 function ordPayload(f){
  const c=cartCtx(),u=TGU(),MM=ocMode()==='meet';
- return{name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:((($('#cx')||{}).value||'').trim()+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}}
+ return{name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:((($('#cx')||{}).value||'').trim()+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}}
 function kcWatchSet(ph){try{localStorage.setItem('sls_kycw',JSON.stringify({ph,t:Date.now()}))}catch(e){}}
 async function kcStash(f,ks){
  if(ks==='no')return;
@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='20 oct. · 20h30 · Strass GPS alerte client';
+var APP_V='20 oct. · 22h00 · Strass offert auto';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -2392,7 +2392,7 @@ body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count
  var _pv=window.pvSync;if(typeof _pv==='function'){window.pvSync=pvSync=function(){var d=document.querySelector('#pS #dt'),o=d&&d.textContent;_pv();if(d&&d.textContent!==o&&!RM){d.classList.remove('pflip');void d.offsetWidth;d.classList.add('pflip')}}}
 
  /* ===== carte de fidélité : N commandes = 1 récompense (ex. 1 article offert) ===== */
- function loyCfg(){var c={};try{c=cfgAll().loy||{}}catch(e){}var n=Math.max(2,Math.min(30,Math.round(+c.n)||10));return{on:!(c.on===false||c.on==='false'||c.on===0),n:n,r:String(c.r==null||String(c.r).trim()===''?'1 article offert':c.r).trim()}}
+ function loyCfg(){var c={};try{c=cfgAll().loy||{}}catch(e){}var n=Math.max(2,Math.min(30,Math.round(+c.n)||10));return{on:!(c.on===false||c.on==='false'||c.on===0),n:n,r:String(c.r==null||String(c.r).trim()===''?'1 article offert':c.r).trim(),cheap:c.offre==='Le moins cher du panier'}}
  function loyIc(o){var m=(S.loyIc||{})[o&&o.id];if(!m)return'💎';if(m.u)return'<img src="'+esc(m.u)+'" alt="">';return esc(m.e||'💎')}
  var LR=null,LRbusy=false,LRts=0;
  function loyPh(){try{return String((JSON.parse(localStorage.getItem('sls_adr')||'{}')).ph||'')}catch(e){return''}}
@@ -2419,8 +2419,17 @@ body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count
   if(av>0)h+='<div class="rw">🎁 <span>'+esc(c.r)+'</span>'+(av>1?' × '+av:'')+'</div><div class="note" style="color:var(--tx)">🎁 Ta récompense est prête !</div><div class="note">Coche-la dans ton panier pour l’utiliser sur ta prochaine commande.</div>';
   else h+='<div class="note">'+(c.n-cur===1?'Plus que 1 commande pour obtenir :':'Plus que '+(c.n-cur)+' commandes pour obtenir :')+'</div><div class="rw">🎁 <span>'+esc(c.r)+'</span></div>';
   return h+'<div class="note" style="font-size:11px;opacity:.7">Chaque commande envoyée compte.</div></div>'}catch(e){return''}};
- window.loyCart=function(){try{var c=loyCfg();if(!c.on)return'';loyKick();if(loyAvail()<1)return'';return '<div class="box loy rd"><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" data-loyuse style="width:22px;margin:0" '+(S.loyUse?'checked':'')+'><span><b>🎁 Utiliser ma récompense fidélité :</b> <span class="rw" style="margin:0;padding:3px 10px">'+esc(c.r)+'</span></span></label></div>'}catch(e){return''}};
- document.addEventListener('change',function(e){var t=e.target;if(t&&t.matches&&t.matches('[data-loyuse]')){S.loyUse=!!t.checked;S.loyBase=S.orders.length;save()}},true);
+ /* ----- article offert : marqué « OFFERT » dans le panier quand la carte est complète ----- */
+ function loyUnits(){var u=[];Object.keys(S.cart).filter(function(k){return S.cart[k]>0}).forEach(function(k,ix){var p=lineOf(k);if(!p)return;for(var i=0;i<S.cart[k];i++)u.push({k:p.id,p:p,price:+p.p||0,at:(S.cartAt||{})[p.id]||0,ix:ix*1000+i})});return u}
+ window.loyFree=function(){try{var c=loyCfg();if(!c.on||loyAvail()<1||S.loyUse===false)return null;var u=loyUnits();if(u.length<2)return null;var f;
+   if(c.cheap){f=u.slice().sort(function(a,b){return a.price-b.price||a.at-b.at||a.ix-b.ix})[0]}else{f=u.slice().sort(function(a,b){return a.at-b.at||a.ix-b.ix})[1]}
+   return f?{key:f.k,price:f.price,name:f.p.n}:null}catch(e){return null}};
+ window.loyTag=function(p){try{var f=window.loyFree();if(!f||f.key!==p.id)return'';return ' <span class="rw" style="margin:0;padding:2px 8px;font-size:12px">🎁 OFFERT · −'+eur(f.price)+'</span>'}catch(e){return''}};
+ var _ctL=cartT;cartT=function(sub,pr){var T=_ctL(sub,pr);try{var f=window.loyFree();if(f&&sub>0){var add=Math.min(f.price,Math.max(0,sub-T.disc));if(add>0){T.disc+=add;T.tot=sub-T.disc+T.del;T.free={key:f.key,price:add,name:f.name}}}}catch(e){}return T};
+ window.loyCart=function(){try{var c=loyCfg();if(!c.on)return'';loyKick();if(loyAvail()<1)return'';var f=window.loyFree(),on=S.loyUse!==false;
+  var st=f?esc(f.name)+' <span class="rw" style="margin:0;padding:3px 10px">🎁 OFFERT · −'+eur(f.price)+'</span>':on?'<span class="note" style="display:inline">ajoute un 2ᵉ article au panier : '+(c.cheap?'le moins cher':'le 2ᵉ')+' sera offert 🎁</span>':'<span class="note" style="display:inline">désactivée pour cette commande</span>';
+  return '<div class="box loy rd"><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" data-loyuse style="width:22px;margin:0" '+(on?'checked':'')+'><span><b>🎁 Récompense fidélité (appliquée automatiquement) :</b> '+st+'</span></label></div>'}catch(e){return''}};
+ document.addEventListener('change',function(e){var t=e.target;if(t&&t.matches&&t.matches('[data-loyuse]')){S.loyUse=!!t.checked;save();render()}},true);
  /* carte de fidélité animée à la validation de la commande */
  try{[['✅ Commande validée : +1 case !',['✅ Order confirmed: +1 stamp!','✅ ¡Pedido validado: +1 casilla!','✅ Bestellung bestätigt: +1 Stempel!','✅ تم تأكيد الطلب: +1 خانة!']],
   ['🎉 Carte complète !',['🎉 Card complete!','🎉 ¡Tarjeta completa!','🎉 Karte voll!','🎉 البطاقة مكتملة!']]
@@ -2484,9 +2493,14 @@ body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count
   else if(/[?&]lite=1/.test(q)){LITE=true;try{localStorage.setItem('sls_lite','1')}catch(e){}}
   else if(sv==='1')LITE=true;else if(sv==='0')LITE=false;else LITE=(pf==='tdesktop');
   window.__LITE=LITE;window.__TGPF=pf;if(LITE)document.body.classList.add('lite')}catch(e){}
- var _onL=ocNote;ocNote=function(){var r=_onL.apply(this,arguments);try{var c=loyCfg();if(c.on&&S.loyUse&&loyAvail()>0)r+='\n[FIDÉLITÉ] 🎁 '+c.r+' à ajouter (carte de fidélité, '+c.n+' commandes)'}catch(e){}return r};
- var _rdL=render;render=function(){try{if(S.loyUse&&S.orders.length>(S.loyBase==null?S.orders.length:S.loyBase)){if(!loyRem())S.loyUsed=(S.loyUsed||0)+1;LRts=0;S.loyUse=false;save()}}catch(e){}return _rdL.apply(this,arguments)};
- try{var sl=CSEC.find(function(x){return x.id==='fd'});if(sl&&!sl.items.some(function(i){return i.k==='loy'}))sl.items.unshift({k:'loy',tg:1,def:1,ic:'🎟️',t:'Carte de fidélité',d:'Après un certain nombre de commandes, le client gagne une récompense (ex. 1 article offert). Affichée sur le profil et dans le panier. Compte les commandes envoyées depuis le téléphone du client.',f:[{n:'n',l:'Nombre de commandes pour la récompense',t:'num',d:10},{n:'r',l:'Récompense',d:'1 article offert'}]})}catch(e){}
+ var _onL=ocNote;ocNote=function(){var r=_onL.apply(this,arguments);try{var c=loyCfg(),f=window.loyFree&&window.loyFree();if(c.on&&f)r+='\n[FIDÉLITÉ] 🎁 OFFERT : '+f.name+' (carte de fidélité, '+c.n+' commandes)'}catch(e){}return r};
+ var _rdL=render;render=function(){try{var n=S.orders.length;
+   if(S.loyFlag){if(n>(S.loyBase==null?n:S.loyBase)){if(!loyRem())S.loyUsed=(S.loyUsed||0)+1;LRts=0;S.loyUse=null;S.loyFlag=false;save()}}
+   /* ordre d'ajout des articles (pour « le 2ᵉ article ajouté ») */
+   var at=S.cartAt=S.cartAt||{},ks=Object.keys(S.cart).filter(function(k){return S.cart[k]>0});S.cartSeq=S.cartSeq||0;
+   ks.forEach(function(k){if(!at[k])at[k]=++S.cartSeq});Object.keys(at).forEach(function(k){if(ks.indexOf(k)<0)delete at[k]});
+   var f=window.loyFree();if(f){S.loyFlag=true;S.loyBase=n}else S.loyFlag=false}catch(e){}return _rdL.apply(this,arguments)};
+ try{var sl=CSEC.find(function(x){return x.id==='fd'});if(sl&&!sl.items.some(function(i){return i.k==='loy'}))sl.items.unshift({k:'loy',tg:1,def:1,ic:'🎟️',t:'Carte de fidélité',d:'Après un certain nombre de commandes, le client gagne une récompense (ex. 1 article offert). Affichée sur le profil et dans le panier. Compte les commandes envoyées depuis le téléphone du client.',f:[{n:'n',l:'Nombre de commandes pour la récompense',t:'num',d:10},{n:'r',l:'Récompense',d:'1 article offert'},{n:'offre',l:'Quel article est offert dans le panier ?',t:'sel',o:['Le 2ᵉ article ajouté','Le moins cher du panier'],d:'Le 2ᵉ article ajouté'}]})}catch(e){}
 })();
 </script>
 <style id="stkfx">
@@ -3204,6 +3218,24 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   if(typeof sb==='undefined'||!sb||!sb.rpc||sb.__pcHook)return;sb.__pcHook=1;clearInterval(iv);
   var o=sb.rpc.bind(sb);sb.rpc=function(name,args){var p=o(name,args);if(name!=='create_order_v2')return p;
    return Promise.resolve(p).then(function(r){if(r&&r.error&&/Code promo/.test(String(r.error.message||''))){try{var w=S.wallet[S.promo];if(w&&w.srv){w.used=true;S.promo=-1;save();setTimeout(render,60)}}catch(e){}}return r})}},500)})();
+ /* ===== codes appliqués automatiquement (promo + gagnés aux jeux) ===== */
+ function subNow(){var s=0;Object.keys(S.cart).forEach(function(k){if(S.cart[k]>0){var p=lineOf(k);if(p)s+=p.p*S.cart[k]}});return s}
+ function codeOk(w,sub){return w&&ok(w)&&sub>=(w.min!=null?w.min:RULES.minOrder)}
+ function autoPromo(){var sub=subNow(),n=S.wallet.length;
+  if(n>(S.walletN||0)){S.promoOff=false;S.promoMan=false}S.walletN=n;
+  if(sub<=0){S.promoOff=false;S.promoMan=false;S.promoAuto=false;return}
+  var cur=S.wallet[S.promo],curOk=codeOk(cur,sub);if(S.promoMan&&curOk)return;if(S.promoOff)return;
+  var base=cartT(sub,null).tot,best=-1,bg=0;
+  S.wallet.forEach(function(w,i){if(!codeOk(w,sub))return;var g=base-cartT(sub,w.r).tot;if(g>bg+1e-9){bg=g;best=i}});
+  if(best>=0&&best!==S.promo){S.promo=best;S.promoAuto=true;save()}
+  else if(best<0&&!curOk&&S.promo>=0){S.promo=-1;S.promoAuto=false}}
+ var _rdP=render;render=function(){try{autoPromo()}catch(e){}return _rdP.apply(this,arguments)};
+ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-pr]');if(!b)return;var i=+b.dataset.pr;
+  if(S.promo===i){S.promoOff=true;S.promoMan=false;S.promoAuto=false}else{S.promoOff=false;S.promoMan=true;S.promoAuto=false}},true);
+ var _lcP=window.loyCart;window.loyCart=function(){var h='';try{var sub=subNow(),w=S.wallet[S.promo];
+   if(codeOk(w,sub)&&S.promoAuto)h='<div class="box" style="text-align:center;background:rgba(31,191,117,.12);border:1px solid #1fbf75">✅ Code <b>'+esc(w.code)+'</b> appliqué automatiquement ('+esc(w.r.l)+')<div class="note" style="margin:4px 0 0">Touche-le dans la liste ci-dessous pour le retirer.</div></div>'}catch(e){}
+   return h+(typeof _lcP==='function'?_lcP():'')};
+ window.__autop={autoPromo:autoPromo};
  window.__pc={view:view,parse:parse,apply:apply};
 })();
 </script>
