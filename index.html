@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='20 oct. · 20h05 · Strass GPS voitures';
+var APP_V='20 oct. · 20h30 · Strass GPS alerte client';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3396,7 +3396,24 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   if(x.dataset.tko){cur=x.dataset.tko;view(cur);fetchAll(true).then(function(){view(cur)})}
   else{fetchAll(true).then(function(){view(cur);toast('Actualisé ✓')})}},true);
  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-close]')){cur=null;clearTimeout(timer)}},true);
- window.__trk={TK:TK,fetch:fetchAll,view:view};
+ /* ----- « Ta livraison est en route » : bannière + ouverture directe de la carte ----- */
+ function seenGet(){try{return JSON.parse(sessionStorage.getItem('sls_tkseen')||'[]')}catch(e){return[]}}
+ function seenAdd(n){try{var a=seenGet();a.push(n);sessionStorage.setItem('sls_tkseen',JSON.stringify(a))}catch(e){}}
+ function recent(o){return o&&o.t&&Date.now()-o.t<864e5}
+ function inTransit(){return mine().filter(function(x){var t=TK[String(x.n)];return recent(x.o)&&!(t&&(t.status==='livrée'||t.status==='annulée'))})}
+ var bh=0;
+ function banner(id,n){var b=document.getElementById('tkb');if(!b){b=document.createElement('div');b.id='tkb';b.style.cssText='position:fixed;left:10px;right:10px;top:max(10px,env(safe-area-inset-top));z-index:2147482000;background:linear-gradient(135deg,#2f6bff,#1a3fa8);color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.5);display:flex;gap:10px;align-items:center;cursor:pointer;font-size:14px';document.body.appendChild(b)}
+  b.innerHTML='<span style="font-size:28px">'+(window.dlvVeh?window.dlvVeh().html:'🛵')+'</span><div style="text-align:left"><b style="display:block;font-size:15px">Ta livraison est en route !</b>Appuie pour suivre ton livreur sur la carte</div><button aria-label="Fermer" data-tkbx style="margin-left:auto;background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:10px;width:30px;height:30px">✕</button>';
+  b.style.display='flex';b.dataset.id=id;clearTimeout(bh);bh=setTimeout(function(){b.style.display='none'},15000);try{navigator.vibrate&&navigator.vibrate([150,80,150])}catch(e){}}
+ function check(){inTransit().forEach(function(x){var t=TK[String(x.n)];if(t&&t.status==='expédiée'&&!t.meet&&!t.tracking&&seenGet().indexOf(x.n)<0){seenAdd(x.n);banner(x.o.id,x.n)}})}
+ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#tkb');if(!b)return;if(e.target.closest('[data-tkbx]')){b.style.display='none';e.stopPropagation();return}b.style.display='none';e.stopPropagation();if(window.dlvMapOpen)window.dlvMapOpen(b.dataset.id)},true);
+ function poll(){if(document.hidden||typeof sb==='undefined'||!sb||!inTransit().length)return;fetchAll(false).then(check)}
+ setInterval(poll,30000);
+ document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(poll,400)});
+ setTimeout(function(){if(typeof sb==='undefined'||!sb)return;var m=String(location.hash||'').match(/^#track-(\d+)$/);
+  if(m){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}if(window.dlvMapOpen)window.dlvMapOpen('CMD-'+m[1]);return}
+  if(inTransit().length)fetchAll(true).then(check)},2500);
+ window.__trk={TK:TK,fetch:fetchAll,view:view,check:check,poll:poll};
 })();
 </script>
 <style id="mapcss">
