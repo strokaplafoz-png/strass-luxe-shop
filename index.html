@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='20 oct. · 22h00 · Strass offert auto';
+var APP_V='20 oct. · 22h20 · Strass règles codes';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3236,6 +3236,23 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
    if(codeOk(w,sub)&&S.promoAuto)h='<div class="box" style="text-align:center;background:rgba(31,191,117,.12);border:1px solid #1fbf75">✅ Code <b>'+esc(w.code)+'</b> appliqué automatiquement ('+esc(w.r.l)+')<div class="note" style="margin:4px 0 0">Touche-le dans la liste ci-dessous pour le retirer.</div></div>'}catch(e){}
    return h+(typeof _lcP==='function'?_lcP():'')};
  window.__autop={autoPromo:autoPromo};
+ /* ===== règles modifiables + affichage du bloc codes dans le panier ===== */
+ try{var sy=CSEC.find(function(x){return x.id==='fd'});
+  if(sy&&!sy.items.some(function(i){return i.k==='pcrule'}))sy.items.unshift({k:'pcrule',ic:'⚙️',t:'Règles des codes promo',d:'Minimum de commande, durée de validité des codes gagnés aux jeux, et ce que le client voit dans son panier.',f:[
+   {n:'min',l:'Commande minimum pour utiliser un code (€)',t:'num',d:30},
+   {n:'valid',l:'Durée de validité des codes gagnés aux jeux (jours)',t:'num',d:7},
+   {n:'show',l:'Afficher la liste « Mes codes promo » dans le panier',t:'chk',d:1},
+   {n:'typ',l:'Afficher la case pour taper un code',t:'chk',d:1}]})}catch(e){}
+ function pcR(){var r={};try{r=cfgV('pcrule')}catch(e){}
+  var m=parseFloat(r.min),v=parseFloat(r.valid);
+  RULES.minOrder=isFinite(m)&&m>=0?m:30;RULES.valid=isFinite(v)&&v>0?v:7;
+  var on=function(x){return !(x===false||x==='false'||x===0||x==='0')};
+  return{show:on(r.show),typ:on(r.typ)}}
+ function pcUi(){try{var o=pcR(),inp=document.getElementById('pcIn');if(!inp)return;var box=inp.closest('.box'),row=inp.parentNode;if(!box)return;
+  row.style.display=o.typ?'':'none';
+  Array.prototype.forEach.call(box.children,function(c){if(c!==row)c.style.display=o.show?'':'none'});
+  box.style.display=(!o.show&&!o.typ)?'none':''}catch(e){}}
+ var _rdR=render;render=function(){pcR();var r=_rdR.apply(this,arguments);pcUi();return r};
  window.__pc={view:view,parse:parse,apply:apply};
 })();
 </script>
