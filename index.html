@@ -385,7 +385,7 @@ function win(r){
  const c={code:'SL-'+Math.random().toString(36).slice(2,6).toUpperCase(),r,used:false,exp:Date.now()+RULES.valid*864e5};S.wallet.push(c);S.pts+=10;if(S.promo<0)S.promo=S.wallet.length-1;save();render();return c.code;
 }
 let scDone;
-const msgS=k=>k.code?`Ton code : <span class="code pop">${k.code}</span><br><small style="font-weight:400;color:var(--mu)">Ajouté à ton panier et à ton profil</small>`:(k.r&&k.r.t==='none'?'Perdu… +2 points de consolation 🍀':'Récompense ajoutée à ton solde ✓');
+const msgS=k=>k.code?`Ton code : <span class="code pop">${k.code}</span><br><small style="font-weight:400;color:var(--mu)">Ajouté à ton panier et à ton profil</small>`:(k.r&&k.r.t==='none'?'Perdu… +2 points de consolation 🍀':(window.__nc?'Tu as déjà gagné ton code pour cette commande 🎁<br><small style="font-weight:400">Passe une commande pour en regagner un (+10 points offerts)</small>':'Récompense ajoutée à ton solde ✓'));
 function openS(){$('#ovS').classList.add('show');newTicket()}
 function scC(){let c={};try{c=cfgV('scratch')||{}}catch(e){}return c}
 function scCd(){return Math.max(1,Math.floor(+scC().cd||1))}
@@ -424,7 +424,7 @@ $('#wB').onclick=()=>{
  const n=rewards.length,A=360/n,i=rewards.indexOf(pick(rewards)),c=i*A+A/2,j=(Math.random()-.5)*A*.6;
  S.play.W=today();const r=rewards[i],code=win(r);save();
  rot=rot+360*5+((((-c-rot)%360)+360)%360)+j;$('#wsv').style.transform=`rotate(${rot}deg)`;
- setTimeout(()=>{spin=false;$('.wh').classList.remove('sp');if(r.t!=='none')burst($('.wh'));$('#wT').innerHTML=r.t==='none'?'Pas de chance… à demain !':`<span class="pop" style="display:inline-block">🎉 ${esc(r.l)} !</span>${code?'<br><span class="code">'+code+'</span>':''}`;$('#wB').textContent='Reviens demain 🌙';$('#wB').disabled=true},4400);
+ setTimeout(()=>{spin=false;$('.wh').classList.remove('sp');if(r.t!=='none')burst($('.wh'));$('#wT').innerHTML=r.t==='none'?'Pas de chance… à demain !':`<span class="pop" style="display:inline-block">🎉 ${esc(r.l)} !</span>${code?'<br><span class="code">'+code+'</span>':(window.__nc?'<br><small>Code déjà gagné pour cette commande : passe une commande pour en regagner un (+10 points)</small>':'')}`;$('#wB').textContent='Reviens demain 🌙';$('#wB').disabled=true},4400);
 };
 /* Admin (démo) */
 function openRewards(){
@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='20 oct. · 22h20 · Strass règles codes';
+var APP_V='20 oct. · 23h00 · Strass 1 code par commande';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3241,18 +3241,30 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   if(sy&&!sy.items.some(function(i){return i.k==='pcrule'}))sy.items.unshift({k:'pcrule',ic:'⚙️',t:'Règles des codes promo',d:'Minimum de commande, durée de validité des codes gagnés aux jeux, et ce que le client voit dans son panier.',f:[
    {n:'min',l:'Commande minimum pour utiliser un code (€)',t:'num',d:30},
    {n:'valid',l:'Durée de validité des codes gagnés aux jeux (jours)',t:'num',d:7},
+   {n:'max',l:'Nombre maximum de codes gagnés aux jeux gardés en même temps (les plus anciens disparaissent)',t:'num',d:3},
+   {n:'per',l:'Codes qu’un client peut gagner aux jeux par commande passée (0 = illimité)',t:'num',d:1},
+   {n:'first',l:'Codes gagnables avant sa 1re commande',t:'num',d:1},
    {n:'show',l:'Afficher la liste « Mes codes promo » dans le panier',t:'chk',d:1},
    {n:'typ',l:'Afficher la case pour taper un code',t:'chk',d:1}]})}catch(e){}
  function pcR(){var r={};try{r=cfgV('pcrule')}catch(e){}
   var m=parseFloat(r.min),v=parseFloat(r.valid);
   RULES.minOrder=isFinite(m)&&m>=0?m:30;RULES.valid=isFinite(v)&&v>0?v:7;
   var on=function(x){return !(x===false||x==='false'||x===0||x==='0')};
-  return{show:on(r.show),typ:on(r.typ)}}
+  var mx=parseInt(r.max,10);if(!(mx>=1))mx=3;if(mx>20)mx=20;
+  var pe=parseFloat(r.per),fi=parseFloat(r.first);if(!(pe>=0))pe=1;if(!(fi>=0))fi=1;
+  return{show:on(r.show),typ:on(r.typ),max:mx,per:pe,first:fi}}
+ var _winP=win;win=function(r){window.__nc=false;try{if(r&&r.t!=='none'&&r.t!=='pts'){var o=pcR();
+   if(o.per>0&&(S.earnN||0)>=o.first+(S.orders?S.orders.length:0)*o.per){window.__nc=true;S.pts+=10;save();render();toast('Un seul code promo gagnable par commande : passe une commande pour en regagner un 🎁');return null}
+   S.earnN=(S.earnN||0)+1;save()}}catch(e){}
+  return _winP.apply(this,arguments)};
+ function pcPrune(){try{var o=pcR(),cur=S.wallet[S.promo],g=S.wallet.filter(function(w){return ok(w)}),keep=[],n=0;
+  for(var i=g.length-1;i>=0;i--){var w=g[i];if(w.srv||n<o.max){keep.unshift(w);if(!w.srv)n++}}
+  if(keep.length!==S.wallet.length){S.wallet=keep;S.promo=cur?keep.indexOf(cur):-1;if(S.promo<0)S.promo=-1;S.walletN=keep.length;save()}}catch(e){}}
  function pcUi(){try{var o=pcR(),inp=document.getElementById('pcIn');if(!inp)return;var box=inp.closest('.box'),row=inp.parentNode;if(!box)return;
   row.style.display=o.typ?'':'none';
   Array.prototype.forEach.call(box.children,function(c){if(c!==row)c.style.display=o.show?'':'none'});
   box.style.display=(!o.show&&!o.typ)?'none':''}catch(e){}}
- var _rdR=render;render=function(){pcR();var r=_rdR.apply(this,arguments);pcUi();return r};
+ var _rdR=render;render=function(){pcPrune();var r=_rdR.apply(this,arguments);pcUi();return r};
  window.__pc={view:view,parse:parse,apply:apply};
 })();
 </script>
