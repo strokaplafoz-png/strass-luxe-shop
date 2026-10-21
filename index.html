@@ -607,7 +607,7 @@ async function sendOrder(){if($('#hp')&&$('#hp').value)return;if(Date.now()-(win
  try{localStorage.setItem('sls_adr',JSON.stringify({n,ph,ad,z,c:ct}))}catch(e){}
  try{let id;
   if(sb){const u=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user)||{};
-   const tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');const r=await sb.rpc('create_order_v2',{p:{token:tok,name:n,phone:ph,address:ad,zip:z,city:ct,notes:v('cx'),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:'')}});
+   const tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');const r=await sb.rpc('create_order_v2',{p:{token:tok,name:n,phone:ph,address:ad,zip:z,city:ct,notes:v('cx'),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr&&!c.T.flash?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:'')}});
    if(r.error){if(/anti-robot/i.test(r.error.message))clearPass();throw r.error}clearPass();id=r.data}else id='DEMO-'+Math.random().toString(36).slice(2,6).toUpperCase();
   if(c.pr)c.pr.used=true;S.orders.unshift({id:'CMD-'+id,d:new Date().toLocaleDateString(LOC()),t:Date.now(),L:c.L.map(p=>({n:p.n,q:S.cart[p.id],p:p.p})),tot:c.T.tot});
   S.pts+=Math.floor(c.T.tot);S.cart={};S.promo=-1;save();render();
@@ -879,7 +879,7 @@ async function sendOrder(){
  if(!MM)try{localStorage.setItem('sls_adr',JSON.stringify({n:f.cn,ph:f.cp,ad:f.ca,z:f.cz,c:f.cv,y:f.cy}))}catch(e){}
  try{let id;
   if(sb){const u=TGU(),tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');
-   const r=await sb.rpc('create_order_v2',{p:{token:tok,name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:(v('cx')+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}});
+   const r=await sb.rpc('create_order_v2',{p:{token:tok,name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:(v('cx')+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr&&!c.T.flash?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}});
    if(r.error){if(/anti-robot/i.test(r.error.message))clearPass();throw r.error}clearPass();id=r.data}
   else id='DEMO-'+Math.random().toString(36).slice(2,6).toUpperCase();
   const rows=c.L.map(p=>({n:p.n,q:S.cart[p.id],p:p.p,t:thumb(p)}));
@@ -2005,7 +2005,7 @@ document.addEventListener('click',async e=>{if(!sb)return;const t=e.target.close
 var KCORD=null;
 function ordPayload(f){
  const c=cartCtx(),u=TGU(),MM=ocMode()==='meet';
- return{name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:((($('#cx')||{}).value||'').trim()+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}}
+ return{name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:((($('#cx')||{}).value||'').trim()+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr&&!c.T.flash?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}}
 function kcWatchSet(ph){try{localStorage.setItem('sls_kycw',JSON.stringify({ph,t:Date.now()}))}catch(e){}}
 async function kcStash(f,ks){
  if(ks==='no')return;
@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='21 oct. · 02h30 · Strass vente flash';
+var APP_V='21 oct. · 03h10 · Strass flash sans promo';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3418,7 +3418,7 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
    h.dataset.p=x.price;h.innerHTML='<span class="fls">'+eur(x.p.p)+'</span>'+eur(x.price);
    h.insertAdjacentHTML('beforebegin','<div id="flbd" class="flb big" data-flu="'+x.f.until+'" style="justify-content:center">⚡ VENTE FLASH −'+x.f.pct+' % · fin dans <b>'+cd(x.f.until-Date.now())+'</b></div>')}}catch(e){}return r};
  /* panier */
- var _ct=cartT;cartT=function(sub,pr){try{var fa=amount();if(fa.amount>0&&sub>0){var a=Math.min(fa.amount,sub),T=_ct(sub-a,pr);T.disc=r2(T.disc+a);T.tot=r2(sub-T.disc+T.del);T.flash={amount:a,lines:fa.lines};return T}}catch(e){}return _ct(sub,pr)};
+ var _ct=cartT;cartT=function(sub,pr){try{var fa=amount();if(fa.amount>0&&sub>0){var a=Math.min(fa.amount,sub),T=_ct(sub-a,null);T.disc=r2(T.disc+a);T.tot=r2(sub-T.disc+T.del);T.flash={amount:a,lines:fa.lines};return T}}catch(e){}return _ct(sub,pr)};
  var _lt=window.loyTag;window.loyTag=function(p){var h='';try{var f=forP(p.id);if(f)h=' <span class="flb" style="display:inline-flex;margin:0">⚡ −'+f.pct+' %</span>'}catch(e){}return h+(typeof _lt==='function'?_lt(p):'')};
  /* compte à rebours */
  setInterval(function(){try{var els=document.querySelectorAll('[data-flu]'),n=Date.now(),exp=false;els.forEach(function(e){var u=+e.dataset.flu,t=e.querySelector('span,b');if(u<=n){exp=true;return}if(t)t.textContent=cd(u-n)});if(exp&&!window.__flx){window.__flx=1;try{render()}catch(_){}setTimeout(function(){window.__flx=0},1500)}}catch(e){}},1000);
@@ -3453,6 +3453,9 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   if(b.hasAttribute('data-flx')){var id=b.dataset.flx;save(F().filter(function(x){return String(x.pid)!==String(id)&&+x.until>Date.now()}));try{render()}catch(_){}return view('Vente flash arrêtée.')}
   if(b.hasAttribute('data-fln'))return notify(b.dataset.fln)},true);
  window.__fl={view:view,amount:amount,act:act,cd:cd};
+
+ function fnote(){try{if(amount().amount>0){var m=document.querySelector('#main');if(m&&!m.querySelector('#flnote')){var bs=[].slice.call(m.querySelectorAll('.box')).filter(function(b){return /codes promo/i.test(b.textContent)})[0];if(bs)bs.insertAdjacentHTML('beforebegin','<div id="flnote" class="note" style="margin:10px 0;color:var(--glow)">⚡ Vente flash dans ton panier : les codes promo ne sont pas cumulables avec la vente flash.</div>')}}}catch(e){window.__fle=String(e)}}
+ var _rdF=render;render=function(){var r=_rdF.apply(this,arguments);fnote();return r};setInterval(fnote,500);window.__fnote=fnote;
 })();
 </script>
 <style id="oacss">
