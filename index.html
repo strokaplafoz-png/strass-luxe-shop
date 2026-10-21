@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='21 oct. · 03h10 · Strass flash sans promo';
+var APP_V='21 oct. · 21h10 · Strass GPS live';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3737,9 +3737,9 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   var md=window.dlvVeh().mode,base=md==='bike'?'https://routing.openstreetmap.de/routed-bike':md==='foot'?'https://routing.openstreetmap.de/routed-foot':'https://router.project-osrm.org';
   fetch(base+'/route/v1/driving/'+b+','+a+';'+d+','+c+'?overview=full&geometries=geojson',ctl?{signal:ctl.signal}:{}).then(function(r){return r.json()}).then(function(j){clearTimeout(tm);RT.busy=false;var r=j&&j.routes&&j.routes[0];if(!r){RT.ok=false;return}RT.ok=true;RT.line=r.geometry.coordinates.map(function(q){return[q[1],q[0]]});RT.km=r.distance/1000;RT.min=Math.max(1,Math.round(r.duration/60));paint()}).catch(function(){clearTimeout(tm);RT.busy=false;RT.ok=false})}
  function ago(s){return s<60?s+' s':Math.round(s/60)+' min'}
- function fetchOnce(){if(D.busy||!D.id)return Promise.resolve();D.busy=true;var my=D.id;
+ function fetchOnce(){if(D.busy&&Date.now()-(D.busyAt||0)>12000)D.busy=false;if(D.busy||!D.id)return Promise.resolve();D.busy=true;D.busyAt=Date.now();var my=D.id;
   var init=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData)||'';
-  return Promise.resolve(sb.functions.invoke('track',{body:{initData:init,order:D.n}})).then(function(r){D.busy=false;if(my!==D.id)return;
+  return Promise.race([Promise.resolve(sb.functions.invoke('track',{body:{initData:init,order:D.n}})),new Promise(function(_,rj){setTimeout(function(){rj(new Error('timeout'))},10000)})]).then(function(r){D.busy=false;if(my!==D.id)return;
     if(r&&r.error||!r||!r.data||r.data.error){D.err++;D.res=null;if(r&&r.data&&r.data.error&&D.err<2)D.msg=r.data.error}else{D.err=0;D.res=r.data;D.okAt=Date.now()}paint()}).catch(function(){D.busy=false;D.err++;D.res=null;paint()})}
  function paint(){if(!document.getElementById('dmst'))return;var r=D.res,st,pts=[],ic='',txt='';
   if(D.err>0){st='er';txt='⚠️ Connexion perdue : la position n’est plus actualisée.'+(D.okAt?' Dernière mise à jour il y a '+ago(Math.round((Date.now()-D.okAt)/1000))+'.':'')+' Nouvelle tentative…'}
@@ -3761,7 +3761,7 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  function tick(){clearTimeout(D.timer);if(!D.id)return;var pv=document.getElementById('ovP');if(!pv||!pv.classList.contains('show')){stop();return}
   if(Date.now()-D.t0>40*6e4){var s=document.getElementById('dmst');if(s){s.className='dmst in';s.textContent='Suivi en pause pour économiser ta batterie. Appuie sur « Actualiser ».'}return}
   if(document.hidden){D.timer=setTimeout(tick,5000);return}
-  fetchOnce().then(function(){var f=D.res&&(D.res.status==='livrée'||D.res.status==='annulée');if(D.id&&!f)D.timer=setTimeout(tick,D.res&&D.res.state==='active'?10000:20000)})}
+  var nx=function(){var f=D.res&&(D.res.status==='livrée'||D.res.status==='annulée');if(D.id&&!f)D.timer=setTimeout(tick,D.res&&D.res.state==='active'?5000:15000)};fetchOnce().then(nx,nx)}
  function stop(){clearTimeout(D.timer);RT.line=null;RT.from=null;RT.at=0;D.id=null;D.map=null;D.res=null}
  window.dlvMapOpen=function(id){var m=String(id).match(/^CMD-(\d+)$/);if(!m||typeof sb==='undefined'||!sb)return;stop();D.id=id;D.n=+m[1];D.err=0;D.okAt=0;D.t0=Date.now();D.msg='';
   ovC('<h2>🗺️ Suivi de ma livraison</h2><div id="dmst" class="dmst in">Chargement…</div><div id="dmmap" class="dmw" style="display:none"></div><div id="dmline"></div><div id="dmup" class="note" style="text-align:center"></div><button class="btn alt" data-dmr>↻ Actualiser</button><button class="btn alt" data-dmb>← Retour</button><p class="note" style="text-align:left;font-size:12px">🔒 Ta position n’est jamais partagée avec le livreur. Tu vois la sienne uniquement pendant la livraison, et seulement quand elle est partageable.</p>');
@@ -3770,6 +3770,9 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   if(t.hasAttribute('data-dmr')){D.t0=Date.now();tick()}
   else if(t.hasAttribute('data-dmb')){var id=D.id;stop();if(window.__trk)window.__trk.view(id)}
   else stop()},true);
+ function wake(){if(D.id&&!document.hidden){var pv=document.getElementById('ovP');if(pv&&pv.classList.contains('show')&&Date.now()-D.t0<=40*6e4)tick()}}
+ document.addEventListener('visibilitychange',wake);window.addEventListener('focus',wake);window.addEventListener('online',wake);window.addEventListener('pageshow',wake);
+ setInterval(function(){try{if(!D.id)return;var up=document.getElementById('dmup');if(up&&D.okAt)up.textContent='Dernière actualisation : '+new Date(D.okAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' (il y a '+ago(Math.round((Date.now()-D.okAt)/1000))+')'}catch(e){}},1000);
  window.__dlvmap={D:D};
 })();
 </script>
