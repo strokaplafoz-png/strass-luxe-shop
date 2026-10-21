@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='21 oct. · 22h00 · Strass GPS direct';
+var APP_V='21 oct. · 22h40 · Strass carte livreur';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3782,6 +3782,21 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  function wake(){if(D.id&&!document.hidden){var pv=document.getElementById('ovP');if(pv&&pv.classList.contains('show')&&Date.now()-D.t0<=40*6e4)tick()}}
  document.addEventListener('visibilitychange',wake);window.addEventListener('focus',wake);window.addEventListener('online',wake);window.addEventListener('pageshow',wake);
  setInterval(function(){try{if(!D.id)return;var up=document.getElementById('dmup');if(up&&D.okAt)up.textContent='Dernière actualisation : '+new Date(D.okAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' (il y a '+ago(Math.round((Date.now()-D.okAt)/1000))+')'}catch(e){}},1000);
+ /* ---- carte du livreur (ton écran) : ta position, l'adresse du client, l'itinéraire ---- */
+ var DR={map:null,el:null,rt:{at:0,from:null,line:null,km:0,min:0,busy:false,ok:true,md:''}};
+ function drvRoute(a,b,c,d){var R=DR.rt;if(R.busy)return;var md=window.dlvVeh().mode;if(R.md!==md){R.md=md;R.at=0;R.from=null;R.line=null}
+  var now=Date.now(),moved=R.from?dist(a,b,R.from[0],R.from[1]):1e9;if(now-R.at<30000&&moved<200)return;R.busy=true;R.at=now;R.from=[a,b];
+  var ctl=window.AbortController?new AbortController():null,tm=setTimeout(function(){try{ctl&&ctl.abort()}catch(e){}},8000);
+  var base=md==='bike'?'https://routing.openstreetmap.de/routed-bike':md==='foot'?'https://routing.openstreetmap.de/routed-foot':'https://router.project-osrm.org';
+  fetch(base+'/route/v1/driving/'+b+','+a+';'+d+','+c+'?overview=full&geometries=geojson',ctl?{signal:ctl.signal}:{}).then(function(r){return r.json()}).then(function(j){clearTimeout(tm);R.busy=false;var r=j&&j.routes&&j.routes[0];if(!r){R.ok=false;return}R.ok=true;R.line=r.geometry.coordinates.map(function(q){return[q[1],q[0]]});R.km=r.distance/1000;R.min=Math.max(1,Math.round(r.duration/60))}).catch(function(){clearTimeout(tm);R.busy=false;R.ok=false})}
+ window.dlvDrv={update:function(el,me,dest){if(!el||!me)return;if(DR.el!==el){DR.el=el;DR.map=Map_(el)}
+   var pts=[{lat:me.lat,lng:me.lng,ic:window.dlvVeh().html,me:1}];if(dest)pts.push({lat:dest.lat,lng:dest.lng,ic:'🏠'});
+   var R=DR.rt;if(dest)drvRoute(me.lat,me.lng,dest.lat,dest.lng);else{R.line=null;R.from=null;R.at=0}
+   var rl=(dest&&R.ok&&R.line)?R.line:null;el.style.display='block';DR.map.set(pts,rl);
+   var inf=document.getElementById('gpinfo');if(inf){var t='';if(dest){var m=dist(me.lat,me.lng,dest.lat,dest.lng);
+     t=(rl?'🛣️ Itinéraire : <b>'+(R.km<1?Math.round(R.km*100)*10+' m':R.km.toFixed(1).replace('.',',')+' km')+'</b> · environ <b>'+R.min+' min</b> <span style="opacity:.7">(sans trafic)</span>':'À vol d’oiseau : <b>'+(m<1000?Math.round(m/10)*10+' m':(m/1000).toFixed(1).replace('.',',')+' km')+'</b>')}
+     else t='Adresse du client introuvable : seule ta position est affichée.';inf.innerHTML=t}},
+  reset:function(){DR.el=null;DR.map=null;DR.rt.line=null;DR.rt.from=null;DR.rt.at=0}};
  window.__dlvmap={D:D};
 })();
 </script>
@@ -3795,7 +3810,7 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
 <script>
 (function(){
  if(typeof inCard!=='function'||typeof inboxOpen!=='function')return;
- var GP={live:{},oid:null,watch:null,last:null,sentPos:null,sentAt:0,wl:null,iv:0,res:'',err:0,okAt:0,busy:false,askDone:null,doneId:null,hidden:false};
+ var GP={dest:null,drAt:0,live:{},oid:null,watch:null,last:null,sentPos:null,sentAt:0,wl:null,iv:0,res:'',err:0,okAt:0,busy:false,askDone:null,doneId:null,hidden:false};
  var GEO={enableHighAccuracy:true,maximumAge:5000,timeout:20000};
  function T_(m){try{toast(m)}catch(e){}}
  function ago(s){return s<60?s+' s':Math.round(s/60)+' min'}
@@ -3811,8 +3826,9 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  /* ----- moteur GPS (démarre UNIQUEMENT sur un appui, jamais tout seul, jamais mémorisé) ----- */
  function wake(){try{if(navigator.wakeLock&&!GP.wl)navigator.wakeLock.request('screen').then(function(l){GP.wl=l;l.addEventListener('release',function(){GP.wl=null})}).catch(function(){})}catch(e){}}
  function unwake(){try{GP.wl&&GP.wl.release()}catch(e){}GP.wl=null}
- function halt(){if(GP.watch!=null){try{navigator.geolocation.clearWatch(GP.watch)}catch(e){}}GP.watch=null;clearInterval(GP.iv);GP.iv=0;GP.oid=null;GP.last=null;GP.sentPos=null;GP.sentAt=0;GP.res='';GP.err=0;unwake()}
- function onPos(p){GP.last={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy,t:Date.now()}}
+ function halt(){if(GP.watch!=null){try{navigator.geolocation.clearWatch(GP.watch)}catch(e){}}GP.watch=null;clearInterval(GP.iv);GP.iv=0;GP.oid=null;GP.last=null;GP.dest=null;try{window.dlvDrv&&window.dlvDrv.reset()}catch(e){}GP.sentPos=null;GP.sentAt=0;GP.res='';GP.err=0;unwake()}
+ function drvUp(){try{var el=document.getElementById('gpmap');if(el&&GP.last&&GP.oid&&window.dlvDrv)window.dlvDrv.update(el,GP.last,GP.dest)}catch(e){}}
+ function onPos(p){GP.last={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy,t:Date.now()};if(Date.now()-GP.drAt>1000){GP.drAt=Date.now();drvUp()}}
  function loop(){if(!GP.oid||!GP.last)return;var L=GP.last,moved=GP.sentPos?dist(L.lat,L.lng,GP.sentPos.lat,GP.sentPos.lng):1e9,age=Date.now()-GP.sentAt;
   if(moved<15&&age<25000)return;if(GP.busy)return;GP.busy=true;var oid=GP.oid;
   rpc('dlv_ping',{p_order:oid,p_lat:L.lat,p_lng:L.lng,p_acc:Math.round(L.acc||50)}).then(function(r){GP.busy=false;if(oid!==GP.oid)return;GP.err=0;GP.okAt=Date.now();GP.sentPos={lat:L.lat,lng:L.lng};GP.sentAt=Date.now();GP.res=r;
@@ -3824,7 +3840,7 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   T_('Je cherche ta position…');
   getPos().then(function(p){onPos(p);return geocode(o)}).then(function(d){
     if(!d)T_('Adresse du client introuvable : le suivi marchera, mais sans message « J’arrive ».');
-    return rpc('dlv_start',{p_order:oid,p_dest_lat:d?d.lat:null,p_dest_lng:d?d.lng:null})}).then(function(){begin(oid);T_('📍 Suivi GPS démarré');return refresh()}).then(function(){inDraw(o.id)}).catch(function(e){halt();T_(e.message||'Impossible de démarrer');})}
+    GP.dest=d||null;return rpc('dlv_start',{p_order:oid,p_dest_lat:d?d.lat:null,p_dest_lng:d?d.lng:null})}).then(function(){begin(oid);T_('📍 Suivi GPS démarré');return refresh()}).then(function(){inDraw(o.id);drvUp()}).catch(function(e){halt();T_(e.message||'Impossible de démarrer');})}
  function pause(o){var oid=num(o.id);halt();rpc('dlv_pause',{p_order:oid}).then(refresh).then(function(){T_('Suivi suspendu : plus aucune position partagée');inDraw(o.id)}).catch(function(e){T_(e.message)})}
  function stopT(o){var oid=num(o.id);halt();rpc('dlv_stop',{p_order:oid}).then(refresh).then(function(){T_('Suivi arrêté ✓');inDraw(o.id)}).catch(function(e){T_(e.message)})}
  function done(o){var oid=num(o.id);halt();rpc('dlv_done',{p_order:oid}).then(function(){o.status='livrée';GP.doneId=null;T_('🏁 Livraison terminée ✓');return refresh()}).then(function(){inDraw()}).catch(function(e){T_(e.message)})}
@@ -3835,12 +3851,12 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   else if(!GP.okAt)txt='<span class="gpd on"></span><b>GPS actif</b> · première position en cours…';
   else txt='<span class="gpd on"></span><b>GPS actif</b> · dernière position envoyée il y a '+ago(Math.round((Date.now()-GP.okAt)/1000))+(GP.res==='arrivée'?' · 🚴 « J’arrive » envoyé':'');
   el.innerHTML=txt}
- setInterval(paint,3000);
+ setInterval(function(){paint();drvUp()},3000);
  var _ic=inCard;
  inCard=function(o){var _n=num(o.id),_L=_n&&GP.live[_n];if(_L&&IN.op&&IN.op[o.id]===undefined)IN.op[o.id]=true;var h=_ic(o);
   var okSt=['confirmée','payée','préparée','expédiée'].indexOf(o.status)>-1;if(!sb||!okSt||o.city==='Meetup')return h;
   var oid=num(o.id);if(!oid)return h;var L=GP.live[oid],mine=GP.oid===oid,p;
-  if(mine)p='<div class="t" data-gpl="'+oid+'"><span class="gpd on"></span><b>GPS actif</b></div><div class="row"><button class="btn alt" data-gpa="pause" data-o="'+esc(o.id)+'">⏸ Suspendre le suivi</button><button class="btn alt" data-gpa="stop" data-o="'+esc(o.id)+'">⏹ Arrêter le suivi GPS</button></div>';
+  if(mine)p='<div class="t" data-gpl="'+oid+'"><span class="gpd on"></span><b>GPS actif</b></div><div id="gpmap" class="dmw" style="display:none"></div><div id="gpinfo" class="note" style="text-align:center">Je cherche ta position…</div>'+(GP.dest?'<button class="btn alt" style="margin:6px 0" data-gpnav="'+GP.dest.lat+','+GP.dest.lng+'">🧭 Ouvrir la navigation (Plans / Maps)</button>':'')+'<div class="row"><button class="btn alt" data-gpa="pause" data-o="'+esc(o.id)+'">⏸ Suspendre le suivi</button><button class="btn alt" data-gpa="stop" data-o="'+esc(o.id)+'">⏹ Arrêter le suivi GPS</button></div>';
   else if(L&&L.state==='active')p='<div class="t"><span class="gpd wa"></span><b>Suivi actif côté serveur, mais le GPS n’est pas lancé sur cet appareil.</b> Position non mise à jour depuis '+ago(L.age||0)+'.</div><div class="row"><button class="btn" data-gpa="start" data-o="'+esc(o.id)+'">▶️ Reprendre le GPS</button><button class="btn alt" data-gpa="stop" data-o="'+esc(o.id)+'">⏹ Arrêter</button></div>';
   else if(L&&L.state==='paused')p='<div class="t"><span class="gpd wa"></span><b>Suivi suspendu</b> : aucune position partagée.</div><div class="row"><button class="btn" data-gpa="start" data-o="'+esc(o.id)+'">▶️ Reprendre le GPS</button><button class="btn alt" data-gpa="stop" data-o="'+esc(o.id)+'">⏹ Arrêter</button></div>';
   else p='<div class="t"><span class="gpd"></span><b>GPS désactivé</b> : rien n’est partagé avec le client.</div><button class="btn" style="margin:0" data-gpa="start" data-o="'+esc(o.id)+'">📍 Démarrer le suivi GPS</button>';
@@ -3848,7 +3864,8 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   var box='<div class="gpp"><div class="t" style="opacity:.8">'+(window.dlvVeh?window.dlvVeh().html:'🛵')+' Livraison en direct</div>'+p+'</div>';
   var k='<label class="fl" style="margin-top:10px">Changer le statut à la main</label>',i=h.indexOf(k);return i>-1?h.slice(0,i)+box+h.slice(i):h+box};
  var _io=inboxOpen;inboxOpen=async function(f){await refresh();return _io(f)};
- document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-gpa]');if(!b)return;e.stopPropagation();
+ document.addEventListener('click',function(e){var n=e.target.closest&&e.target.closest('[data-gpnav]');if(n){e.stopPropagation();var ll=String(n.dataset.gpnav).split(',').map(Number);if(ll.length===2&&isFinite(ll[0])&&isFinite(ll[1])){var u='https://www.google.com/maps/dir/?api=1&destination='+ll[0]+','+ll[1]+'&travelmode=driving';try{if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.openLink)Telegram.WebApp.openLink(u);else window.open(u,'_blank')}catch(x){window.open(u,'_blank')}}return}
+ var b=e.target.closest&&e.target.closest('[data-gpa]');if(!b)return;e.stopPropagation();
   var o=IN.l.find(function(x){return String(x.id)===b.dataset.o});if(!o)return;var a=b.dataset.gpa;
   if(a==='start')start(o);else if(a==='pause')pause(o);else if(a==='stop')stopT(o);
   else if(a==='done'){if(GP.doneId===o.id)done(o);else{GP.doneId=o.id;inDraw(o.id)}}},true);
