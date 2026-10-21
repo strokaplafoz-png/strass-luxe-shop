@@ -2132,7 +2132,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='21 oct. · 23h10 · Strass puzzle';
+var APP_V='22 oct. · 01h30 · Strass branchement';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -2195,6 +2195,25 @@ nav button.bump span{display:inline-block;animation:cbdBounce .55s}
 @keyframes iaRise{0%{transform:translateY(0) scale(.7);opacity:0}25%{opacity:1}100%{transform:translateY(-110vh) scale(1.5);opacity:0}}
 @keyframes iaRing{0%{transform:scale(.3);opacity:.9}100%{transform:scale(3.4);opacity:0}}
 @keyframes iaLet{from{opacity:0;transform:translateY(12px) scale(.8)}to{opacity:1;transform:none}}
+/* --- Branchement : prise et fiche néon qui s'emboîtent, flash, puis le logo --- */
+.pgov{position:absolute;left:50%;width:0;height:0;pointer-events:none;z-index:3;color:var(--glow);transform:scale(1.6);transform-origin:0 0}
+.pgov i{position:absolute;font-style:normal;left:0;top:0}
+.pgov svg{display:block;filter:drop-shadow(0 0 5px rgba(var(--srgb),.95)) drop-shadow(0 0 12px rgba(var(--mrgb),.8))}
+.pgov .pgpl{animation:pgPl 1s cubic-bezier(.2,.75,.25,1) both}
+.pgov .pgso{animation:pgSo 1s cubic-bezier(.2,.75,.25,1) both}
+.pgov .pgfl{width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(var(--srgb),.95) 35%,transparent 70%);opacity:0;animation:pgFl .7s ease-out .72s forwards}
+.pgov .pgrn{width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid var(--glow);box-shadow:0 0 18px var(--glow);opacity:0;animation:pgRn 1s ease-out .76s forwards}
+.pgov .pgdt b{position:absolute;left:-2px;top:-2px;width:4px;height:4px;border-radius:50%;background:#dff3ff;box-shadow:0 0 8px var(--glow);opacity:0;animation:pgDt .8s ease-out .74s forwards}
+@keyframes pgPl{0%{transform:translate(-190px,-50%);opacity:0}25%{opacity:1}70%,84%{transform:translate(-53px,-50%);opacity:1}100%{transform:translate(-53px,-50%);opacity:0}}
+@keyframes pgSo{0%{transform:translate(120px,-50%);opacity:0}25%{opacity:1}70%,84%{transform:translate(-16px,-50%);opacity:1}100%{transform:translate(-16px,-50%);opacity:0}}
+@keyframes pgFl{0%{transform:scale(.2);opacity:0}25%{opacity:1}100%{transform:scale(3.6);opacity:0}}
+@keyframes pgRn{0%{transform:scale(.3);opacity:.95}100%{transform:scale(2.3);opacity:0}}
+@keyframes pgDt{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+#intro.ia-plug .mk,#iaprev.ia-plug .iamk{animation:iaPlug 1s cubic-bezier(.2,.8,.3,1) .78s both,breath 2.4s ease-in-out 1.8s infinite alternate}
+@keyframes iaPlug{0%{opacity:0;transform:scale(.45)}55%{opacity:1;transform:scale(1.2)}100%{opacity:1;transform:scale(1.14)}}
+#intro.ia-plug .w1,#intro.ia-plug .w2,#intro.ia-plug .beam{animation-delay:.8s}
+#intro.ia-plug .rg{transition-delay:1s}
+
 @keyframes iaSpin{0%{transform:perspective(700px) rotateY(-540deg) scale(.2);opacity:0}60%{opacity:1}100%{transform:perspective(700px) rotateY(0) scale(1.14)}}
 @keyframes iaNeon{0%,6%{opacity:0;filter:brightness(2)}8%{opacity:.9}11%{opacity:.1}16%{opacity:1}22%{opacity:.25}30%{opacity:1}36%{opacity:.5}44%,100%{opacity:1;filter:none}}
 @keyframes iaBoom{0%{transform:scale(3.6);filter:blur(22px);opacity:0}55%{filter:blur(0);opacity:1}78%{transform:scale(1.04)}100%{transform:scale(1.14)}}
@@ -2349,9 +2368,9 @@ body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count
  var _caA=cfgApply;cfgApply=function(){var r=_caA.apply(this,arguments);accRgb();return r};accRgb();
 
  /* ----- animation d'ouverture choisie dans l'admin (réglage « Loader d'intro ») ----- */
- var IA_CLS=['spin','neon','boom','drop','glitch','beat'];
- var IA_OPT=['Classique (lumineux)','Pluie de gouttes','Vagues lumineuses','Scanner laser','Feux d’artifice','Pluie numérique','Rideau qui s’ouvre','Bulles qui montent','Glitch néon','Battement de cœur','Pluie de strass','Fumée colorée','Onde sonar','Logo qui tourne','Néon qui s’allume','Explosion','Rebond','Lettres du nom','Aucun'];
- var IA_KEY={'Pluie de gouttes':'drops','Vagues lumineuses':'waves','Scanner laser':'scan','Feux d’artifice':'fire','Pluie numérique':'matrix','Rideau qui s’ouvre':'curtain','Bulles qui montent':'bubbles','Glitch néon':'glitch','Battement de cœur':'beat','Pluie de strass':'leaves','Fumée colorée':'smoke','Onde sonar':'sonar','Logo qui tourne':'spin','Néon qui s’allume':'neon','Explosion':'boom','Rebond':'drop','Lettres du nom':'letters','Aucun':'none'};
+ var IA_CLS=['spin','neon','boom','drop','glitch','beat','plug'];
+ var IA_OPT=['Classique (lumineux)','Pluie de gouttes','Vagues lumineuses','Scanner laser','Feux d’artifice','Pluie numérique','Rideau qui s’ouvre','Bulles qui montent','Glitch néon','Battement de cœur','Pluie de strass','Fumée colorée','Onde sonar','Logo qui tourne','Néon qui s’allume','Explosion','Rebond','Lettres du nom','Aucun','Branchement (prise)'];
+ var IA_KEY={'Pluie de gouttes':'drops','Vagues lumineuses':'waves','Scanner laser':'scan','Feux d’artifice':'fire','Pluie numérique':'matrix','Rideau qui s’ouvre':'curtain','Bulles qui montent':'bubbles','Glitch néon':'glitch','Battement de cœur':'beat','Pluie de strass':'leaves','Fumée colorée':'smoke','Onde sonar':'sonar','Logo qui tourne':'spin','Néon qui s’allume':'neon','Explosion':'boom','Rebond':'drop','Lettres du nom':'letters','Aucun':'none','Branchement (prise)':'plug'};
  try{var itI=null;CSEC.forEach(function(s){s.items.forEach(function(i){if(i.k==='intro')itI=i})});if(itI){itI.d='Choisis l’animation d’ouverture de ta boutique (touche « Aperçu » pour la voir).';itI.f.forEach(function(f){if(f.n==='style'){f.o=IA_OPT;f.d=IA_OPT[0]}})}}catch(e){}
  function iaName(){try{var n=cfgV('intro').style;return IA_KEY[n]?n:IA_OPT[0]}catch(e){return IA_OPT[0]}}
  function iaBuild(key,host){var o=document.createElement('div');o.className='iaov';var h='',i;
@@ -2367,18 +2386,23 @@ body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count
   else if(key==='sonar'){for(i=0;i<3;i++)h+='<i class="rg2" style="animation-delay:'+(i*.8)+'s"></i>'}
   else if(key==='letters'){var v={};try{v=cfgV('home')}catch(e){}var a=String(v.b1==null?'STRASS LUXE':v.b1),b=String(v.b2==null?'SHOP':v.b2),k=0,esc2=function(c){return c===' '?'&nbsp;':c.replace(/[&<>]/g,'')};
    h='<i class="tx">'+a.split('').map(function(c){return '<span style="animation-delay:'+(.4+(k++)*.08)+'s">'+esc2(c)+'</span>'}).join('')+'&nbsp;<b>'+b.split('').map(function(c){return '<span style="animation-delay:'+(.4+(k++)*.08)+'s">'+esc2(c)+'</span>'}).join('')+'</b></i>'}
+  if(key==='plug'){var ct=host.querySelector('.stage'),cy=ct?'130px':'50%';if(!ct)ct=host;
+   var SP='<svg class="pgp" viewBox="0 0 70 30" width="70" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 15H14"/><rect x="14" y="4" width="26" height="22" rx="6"/><path d="M24 10v10M30 10v10"/><path d="M40 10H56M40 20H56"/></svg>',
+    SS='<svg class="pgs" viewBox="0 0 70 30" width="70" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M56 15H68"/><rect x="16" y="3" width="28" height="24" rx="7"/><circle cx="26" cy="11" r="1.8"/><circle cx="26" cy="19" r="1.8"/></svg>',dots='';
+   for(i=0;i<14;i++){var an=i/14*6.283,r=70+((i*17)%30);dots+='<b style="--dx:'+Math.round(Math.cos(an)*r)+'px;--dy:'+Math.round(Math.sin(an)*r)+'px"></b>'}
+   o.className='pgov';o.style.top=cy;o.innerHTML='<i class="pgpl">'+SP+'</i><i class="pgso">'+SS+'</i><i class="pgfl"></i><i class="pgdt">'+dots+'</i><i class="pgrn"></i>';ct.appendChild(o);return o}
   o.innerHTML=h;var vg=o.classList.contains('bk')&&host.querySelector('.vig');if(vg&&vg.parentNode===host)host.insertBefore(o,vg.nextSibling);else host.insertBefore(o,host.firstChild);return o}
  function iaApply(){try{var el=document.getElementById('intro');if(!el)return;var n=iaName(),key=IA_KEY[n]||'';if(el.dataset.ia===n)return;el.dataset.ia=n;
-  IA_CLS.forEach(function(k){el.classList.remove('ia-'+k)});var old=el.querySelector('.iaov');if(old)old.remove();
+  IA_CLS.forEach(function(k){el.classList.remove('ia-'+k)});var old=el.querySelector('.iaov');if(old)old.remove();[].forEach.call(el.querySelectorAll('.pgov'),function(x){x.remove()});
   if(key==='none')return;
-  if(IA_CLS.indexOf(key)>=0)el.classList.add('ia-'+key);else if(key)iaBuild(key,el)}catch(e){}}
+  if(IA_CLS.indexOf(key)>=0){el.classList.add('ia-'+key);if(key==='plug')iaBuild(key,el)}else if(key)iaBuild(key,el)}catch(e){}}
  iaApply();var _isI=introStart;introStart=function(){iaApply();return _isI.apply(this,arguments)};
  try{Promise.resolve(window.__set).then(function(){iaApply()},function(){})}catch(e){}
  window.iaPreview=function(n){var key=IA_KEY[n]||'',lg=''; var c=cfgGet();var src=c.logo||'';try{if(lgNew&&lgNew.pv)src=lgNew.pv}catch(e){}
   var p=document.getElementById('iaprev');if(p)p.remove();p=document.createElement('div');p.id='iaprev';
   p.innerHTML='<button class="iax" type="button">✕ Fermer</button><div class="iamk">'+(src?(isVid(src)?"<video src='"+esc(src)+"' autoplay muted playsinline loop></video>":"<img src='"+esc(src)+"' alt=''>"):DEFLG)+'</div>';
   if(key==='none'){p.querySelector('.iamk').insertAdjacentHTML('afterend','<div style="position:absolute;bottom:30%;left:0;right:0;text-align:center;color:#9fb4a8">Aucune animation : la boutique s’ouvre directement.</div>')}
-  if(IA_CLS.indexOf(key)>=0)p.classList.add('ia-'+key);else if(key&&key!=='none')iaBuild(key,p);
+  if(IA_CLS.indexOf(key)>=0){p.classList.add('ia-'+key);if(key==='plug')iaBuild(key,p)}else if(key&&key!=='none')iaBuild(key,p);
   p.querySelector('.iax').onclick=function(){p.remove()};document.body.appendChild(p);if(!matchMedia('(prefers-reduced-motion:reduce)').matches)setTimeout(function(){if(p.parentNode)p.remove()},7000)};
  var _osP=openSet;openSet=function(){var r=_osP.apply(this,arguments);try{var sv=document.querySelector('[data-setsave]');if(sv&&!document.querySelector('[data-lgprev]')){var b=document.createElement('button');b.className='btn alt';b.setAttribute('data-lgprev','1');b.type='button';b.textContent='▶ Voir l’écran de démarrage (aperçu)';sv.parentNode.insertBefore(b,sv)}}catch(e){}return r};
  document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-lgprev]');if(!t)return;e.preventDefault();e.stopPropagation();iaPreview(iaName())},true);
