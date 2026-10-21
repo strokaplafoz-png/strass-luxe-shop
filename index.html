@@ -2132,7 +2132,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='22 oct. · 01h30 · Strass branchement';
+var APP_V='22 oct. · 01h55 · Suivi auto';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3650,6 +3650,15 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
 .tkl div.c{opacity:1;font-weight:700}.tkl div.c i{background:#fff;border-color:var(--glow,#3db2ff);box-shadow:0 0 0 0 var(--glow,#3db2ff);animation:tkr 1.6s infinite}
 @keyframes tkr{70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .tkx{background:rgba(214,69,93,.15);border:1px solid #d6455d;border-radius:12px;padding:10px;text-align:center;margin:10px 0}
+
+.tkv{position:relative;height:104px;display:flex;align-items:center;justify-content:center;margin:2px 0 -6px}
+.tkv svg{width:84px;height:84px;filter:drop-shadow(0 0 14px var(--glow,#3db2ff));overflow:visible}
+.tkv circle{stroke:var(--glow,#3db2ff);stroke-width:4;fill:rgba(47,107,255,.16);stroke-dasharray:176;stroke-dashoffset:176;transform-origin:center;animation:tkvc .7s ease-out forwards}
+.tkv path{stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none;stroke-dasharray:52;stroke-dashoffset:52;animation:tkvp .45s ease-out .55s forwards}
+.tkv b{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--glow,#3db2ff);box-shadow:0 0 8px var(--glow,#3db2ff);opacity:0;animation:tkvd .9s ease-out .6s forwards}
+@keyframes tkvc{to{stroke-dashoffset:0}}@keyframes tkvp{to{stroke-dashoffset:0}}
+@keyframes tkvd{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.4)}}
+@media (prefers-reduced-motion:reduce){.tkv circle,.tkv path,.tkv b{animation:none;stroke-dashoffset:0;opacity:1}.tkv b{display:none}}
 </style>
 <script>
 (function(){
@@ -3714,6 +3723,24 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  setTimeout(function(){if(typeof sb==='undefined'||!sb)return;var m=String(location.hash||'').match(/^#track-(\d+)$/);
   if(m){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}if(window.dlvMapOpen)window.dlvMapOpen('CMD-'+m[1]);return}
   if(inTransit().length)fetchAll(true).then(check)},2500);
+ /* ----- Commande validée par la boutique : le client est emmené tout seul sur le suivi, avec une petite animation ----- */
+ function vGet(){try{return JSON.parse(sessionStorage.getItem('sls_tkvalid')||'[]')}catch(e){return[]}}
+ function vAdd(n){try{var a=vGet();a.push(n);sessionStorage.setItem('sls_tkvalid',JSON.stringify(a))}catch(e){}}
+ function recent30(o){return o&&o.t&&Date.now()-o.t<30*6e4}
+ function burst(){var d='',i;for(i=0;i<12;i++){var an=i/12*6.283,r=52+((i*13)%22);d+='<b style="--dx:'+Math.round(Math.cos(an)*r)+'px;--dy:'+Math.round(Math.sin(an)*r)+'px"></b>'}
+  return '<div class="tkv" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M19 33l9 9 17-19"/></svg>'+d+'</div>'}
+ function celebrate(id){try{var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
+   [].forEach.call(document.querySelectorAll('.ov.show'),function(o){o.classList.remove('show')});
+   try{if(typeof go==='function')go('me')}catch(e){}
+   setTimeout(function(){cur=id;view(id);var p=document.getElementById('pS');if(p)p.insertAdjacentHTML('afterbegin',burst());try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}},450);return true}catch(e){return false}}
+ function checkValid(){mine().forEach(function(x){var t=TK[String(x.n)];if(!t||!recent30(x.o))return;
+   if(['confirmée','payée','préparée'].indexOf(t.status)<0)return;if(vGet().indexOf(x.n)>=0)return;
+   if(celebrate(x.o.id))vAdd(x.n)})}
+ var _chk=check;check=function(){try{_chk.apply(this,arguments)}catch(e){}try{checkValid()}catch(e){}};
+ /* tant qu'une commande de moins de 30 min n'est pas encore validée : on vérifie toutes les 8 s (appli ouverte seulement) */
+ setInterval(function(){try{if(document.hidden||typeof sb==='undefined'||!sb)return;
+   var w=mine().some(function(x){var t=TK[String(x.n)];return recent30(x.o)&&(!t||t.status==='nouvelle')&&vGet().indexOf(x.n)<0});
+   if(w)fetchAll(true).then(check)}catch(e){}},8000);
  window.__trk={TK:TK,fetch:fetchAll,view:view,check:check,poll:poll};
 })();
 </script>
