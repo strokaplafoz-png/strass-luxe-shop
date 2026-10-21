@@ -607,7 +607,7 @@ async function sendOrder(){if($('#hp')&&$('#hp').value)return;if(Date.now()-(win
  try{localStorage.setItem('sls_adr',JSON.stringify({n,ph,ad,z,c:ct}))}catch(e){}
  try{let id;
   if(sb){const u=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user)||{};
-   const tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');const r=await sb.rpc('create_order_v2',{p:{token:tok,name:n,phone:ph,address:ad,zip:z,city:ct,notes:v('cx'),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:'')}});
+   const tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');const r=await sb.rpc('create_order_v2',{p:{token:tok,name:n,phone:ph,address:ad,zip:z,city:ct,notes:v('cx'),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:'')}});
    if(r.error){if(/anti-robot/i.test(r.error.message))clearPass();throw r.error}clearPass();id=r.data}else id='DEMO-'+Math.random().toString(36).slice(2,6).toUpperCase();
   if(c.pr)c.pr.used=true;S.orders.unshift({id:'CMD-'+id,d:new Date().toLocaleDateString(LOC()),t:Date.now(),L:c.L.map(p=>({n:p.n,q:S.cart[p.id],p:p.p})),tot:c.T.tot});
   S.pts+=Math.floor(c.T.tot);S.cart={};S.promo=-1;save();render();
@@ -879,7 +879,7 @@ async function sendOrder(){
  if(!MM)try{localStorage.setItem('sls_adr',JSON.stringify({n:f.cn,ph:f.cp,ad:f.ca,z:f.cz,c:f.cv,y:f.cy}))}catch(e){}
  try{let id;
   if(sb){const u=TGU(),tok=await ensurePass();if(!tok)throw new Error('Vérification anti-robot annulée');
-   const r=await sb.rpc('create_order_v2',{p:{token:tok,name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:(v('cx')+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}});
+   const r=await sb.rpc('create_order_v2',{p:{token:tok,name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:(v('cx')+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}});
    if(r.error){if(/anti-robot/i.test(r.error.message))clearPass();throw r.error}clearPass();id=r.data}
   else id='DEMO-'+Math.random().toString(36).slice(2,6).toUpperCase();
   const rows=c.L.map(p=>({n:p.n,q:S.cart[p.id],p:p.p,t:thumb(p)}));
@@ -2005,7 +2005,7 @@ document.addEventListener('click',async e=>{if(!sb)return;const t=e.target.close
 var KCORD=null;
 function ordPayload(f){
  const c=cartCtx(),u=TGU(),MM=ocMode()==='meet';
- return{name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:((($('#cx')||{}).value||'').trim()+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}}
+ return{name:f.cn,phone:f.cp,address:MM?ocMeetAddr():f.ca,zip:MM?'MEET':f.cz,city:MM?'Meetup':f.cv,country:MM?'Meetup':f.cy,notes:((($('#cx')||{}).value||'').trim()+ocNote()).slice(0,500),items:c.ids.map(k=>{const[i,vv]=k.split('~');return{id:+i,v:vv||'',q:S.cart[k]}}),delivery:c.T.del,discount:c.T.disc,loyfree:c.T.free?c.T.free.price:0,flashd:c.T.flash?c.T.flash.amount:0,promo:c.pr?c.pr.code:'',tg:u.username?'@'+u.username:(u.id?'id '+u.id:''),tgid:u.id?String(u.id):'',zi:(ocMode()==='del')?(+DRAFT.zi||0):undefined,pay:PAYSEL(),paycode:PAYCODE()}}
 function kcWatchSet(ph){try{localStorage.setItem('sls_kycw',JSON.stringify({ph,t:Date.now()}))}catch(e){}}
 async function kcStash(f,ks){
  if(ks==='no')return;
@@ -2112,7 +2112,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='20 oct. · 01h40 · Strass photo déplaçable';
+var APP_V='21 oct. · 02h30 · Strass vente flash';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3390,6 +3390,69 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  document.addEventListener('click',function(e){var im=e.target;if(!im||im.tagName!=='IMG')return;var g=im.closest&&im.closest('.gal');if(!g)return;
   e.preventDefault();e.stopPropagation();var all=[].slice.call(g.querySelectorAll('img'));openAt(all,all.indexOf(im))},true);
  window.__lbx={openAt:openAt,close:close,state:function(){return{sc:sc,tx:tx,ty:ty,i:I}},zoomAt:zoomAt};
+})();
+</script>
+<style>
+.flb{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#1a1200;background:linear-gradient(90deg,#ffd400,#ff9a00);border-radius:999px;padding:4px 10px;width:fit-content;margin:4px 0}
+.flb.big{font-size:14px;margin:8px auto;padding:8px 14px}
+.flb span,.flb b{font-variant-numeric:tabular-nums}
+.fls{opacity:.55;font-weight:400;text-decoration:line-through;font-size:.82em;margin-right:6px}
+.flr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid #2a3a6e;border-radius:12px;margin:8px 0;text-align:left}
+</style>
+<script>
+(function(){
+ /* ===== Vente flash : prix barré + compte à rebours, remise appliquée au panier ===== */
+ function F(){var f={};try{f=cfgAll().flash||{}}catch(e){}return Array.isArray(f.l)?f.l:[]}
+ function act(){var n=Date.now();return F().filter(function(x){return x&&+x.until>n&&+x.pct>=1&&+x.pct<=90})}
+ function forP(id){id=String(id).split('~')[0];var a=act();for(var i=0;i<a.length;i++)if(String(a[i].pid)===id)return a[i];return null}
+ function r2(x){return Math.round(x*100)/100}
+ function newP(p,f){return r2(p.p*(1-f.pct/100))}
+ function cd(ms){ms=Math.max(0,ms);var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),c=s%60,z=function(n){return(n<10?'0':'')+n};return(d?d+' j ':'')+z(h)+':'+z(m)+':'+z(c)}
+ window.flashInfo=function(id){var f=forP(id);if(!f)return null;var p=products.find(function(x){return x.id==String(id).split('~')[0]});return p?{f:f,p:p,price:newP(p,f)}:null};
+ function amount(){var tot=0,lines=[];Object.keys(S.cart).forEach(function(k){var q=S.cart[k];if(!(q>0))return;var f=forP(k);if(!f)return;var p=products.find(function(x){return x.id==String(k).split('~')[0]});if(!p)return;var a=p.p*q*f.pct/100;tot+=a;lines.push({k:k,a:r2(a)})});return{amount:r2(tot),lines:lines}}
+ /* carte produit */
+ var _cd=card;card=function(p,i){var h=_cd.apply(this,arguments);try{var f=forP(p.id);if(f){var np=newP(p,f);
+   h=h.replace(/<div class='row'><b>([^<]*)<\/b>/,"<div class='flb' data-flu='"+f.until+"'>⚡ −"+f.pct+" % · <span>"+cd(f.until-Date.now())+"</span></div><div class='row'><b><span class='fls'>$1</span>"+eur(np)+"</b>")}}catch(e){}return h};
+ /* fiche produit */
+ var _op=openP;openP=function(id){var r=_op.apply(this,arguments);try{var x=flashInfo(id),h=document.getElementById('dt');if(x&&h&&!document.getElementById('flbd')){
+   h.dataset.p=x.price;h.innerHTML='<span class="fls">'+eur(x.p.p)+'</span>'+eur(x.price);
+   h.insertAdjacentHTML('beforebegin','<div id="flbd" class="flb big" data-flu="'+x.f.until+'" style="justify-content:center">⚡ VENTE FLASH −'+x.f.pct+' % · fin dans <b>'+cd(x.f.until-Date.now())+'</b></div>')}}catch(e){}return r};
+ /* panier */
+ var _ct=cartT;cartT=function(sub,pr){try{var fa=amount();if(fa.amount>0&&sub>0){var a=Math.min(fa.amount,sub),T=_ct(sub-a,pr);T.disc=r2(T.disc+a);T.tot=r2(sub-T.disc+T.del);T.flash={amount:a,lines:fa.lines};return T}}catch(e){}return _ct(sub,pr)};
+ var _lt=window.loyTag;window.loyTag=function(p){var h='';try{var f=forP(p.id);if(f)h=' <span class="flb" style="display:inline-flex;margin:0">⚡ −'+f.pct+' %</span>'}catch(e){}return h+(typeof _lt==='function'?_lt(p):'')};
+ /* compte à rebours */
+ setInterval(function(){try{var els=document.querySelectorAll('[data-flu]'),n=Date.now(),exp=false;els.forEach(function(e){var u=+e.dataset.flu,t=e.querySelector('span,b');if(u<=n){exp=true;return}if(t)t.textContent=cd(u-n)});if(exp&&!window.__flx){window.__flx=1;try{render()}catch(_){}setTimeout(function(){window.__flx=0},1500)}}catch(e){}},1000);
+ /* ===== admin ===== */
+ try{var sx=CSEC.find(function(x){return x.id==='fd'});if(sx&&!sx.items.some(function(i){return i.k==='flash'}))sx.items.unshift({k:'flash',ic:'⚡',t:'Vente flash',d:'Mets un produit en promo pour quelques heures, avec un compte à rebours visible. Tu peux prévenir tes clients d’un clic.',f:[]})}catch(e){}
+ var NT=null;
+ function save(l){var c=cfgAll();c.flash={l:l};cfgSv()}
+ function view(msg){if(!IS_ADMIN)return;var a=act(),h='<h2>⚡ Vente flash</h2>'+(msg?'<p class="note" style="color:var(--glow)">'+esc(msg)+'</p>':'')
+  +'<p class="note" style="text-align:left;margin:0 0 8px">Le prix barré, le compte à rebours et la remise du panier se mettent en place tout seuls chez tes clients, et s’arrêtent à l’heure de fin.</p>'
+  +(a.length?a.map(function(f){var p=products.find(function(x){return x.id==f.pid});if(!p)return'';return '<div class="flr"><div><b>'+esc(p.n)+'</b><br><small>−'+f.pct+' % · '+eur(p.p)+' → '+eur(newP(p,f))+'<br>Fin dans <span data-flu="'+f.until+'">'+cd(f.until-Date.now())+'</span></small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="cat" data-fln="'+f.pid+'">'+(NT===String(f.pid)?'⚠️ Touche encore pour envoyer':'📣 Prévenir les clients')+'</button><button class="cat" data-flx="'+f.pid+'">⏹ Arrêter</button></div></div>'}).join(''):'<div class="note" style="text-align:left">Aucune vente flash en cours.</div>')
+  +'<h3 style="margin:14px 0 6px;text-align:left">Nouvelle vente flash</h3><div style="text-align:left"><label class="fl">Produit</label><select id="flP">'+products.map(function(p){return'<option value="'+p.id+'">'+esc(p.n)+' · '+eur(p.p)+'</option>'}).join('')+'</select>'
+  +'<div class="two"><div><label class="fl">Réduction (%)</label><input id="flC" type="number" inputmode="numeric" min="1" max="90" value="20"></div><div><label class="fl">Durée</label><select id="flD"><option value="3">3 heures</option><option value="6">6 heures</option><option value="12">12 heures</option><option value="24" selected>24 heures</option><option value="48">48 heures</option><option value="72">3 jours</option></select></div></div></div>'
+  +'<button class="btn" data-flgo>⚡ Lancer la vente flash</button><button class="btn alt" data-cfgback>← Retour</button>';
+  aShow(h)}
+ var _cf=cfgForm;cfgForm=function(k){if(k==='flash'){NT=null;view();return}return _cf.apply(this,arguments)};
+ async function notify(pid){var f=forP(pid),p=products.find(function(x){return x.id==pid});if(!f||!p)return;
+  if(NT!==String(pid)){NT=String(pid);view();setTimeout(function(){if(NT===String(pid)){NT=null;try{view()}catch(_){}}},5000);return}
+  NT=null;if(!sb){toast('Envoi impossible en mode démo');view();return}
+  var d=new Date(f.until),when=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  var txt='⚡ VENTE FLASH ⚡\n'+p.n+' à −'+f.pct+' % : '+eur(newP(p,f))+' au lieu de '+eur(p.p)+'.\nJusqu’au '+when+'. Dépêche-toi !';
+  var media=[];try{var u=(p.ph||[])[0];if(u&&!/\.(mp4|mov|webm)(\?|$)/i.test(u))media.push({u:u,v:false})}catch(e){}
+  toast('Envoi en cours…');
+  try{var r=await sb.functions.invoke('broadcast',{body:{text:txt,media:media,btn:[{k:'shop',l:'Voir la vente flash'}]}});if(r.error)throw r.error;var dd=r.data||{};if(dd.error)throw new Error(dd.error);
+   try{logAdd('e5','Vente flash annoncée : '+p.n)}catch(e){}toast('Envoyé à '+(dd.sent|0)+' client(s)'+(dd.failed?' · '+dd.failed+' non joint(s)':'')+' ✓')}
+  catch(e){var m='';try{m=await fnErr(e)}catch(_){m=(e&&e.message)||'Échec de l’envoi'}toast(m)}
+  view()}
+ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-flgo],[data-flx],[data-fln]');if(!b)return;e.preventDefault();e.stopPropagation();
+  if(b.hasAttribute('data-flgo')){var pid=($('#flP')||{}).value,pc=Math.round(+($('#flC')||{}).value),du=+($('#flD')||{}).value;
+   if(!pid)return toast('Choisis un produit');if(!(pc>=1&&pc<=90))return toast('La réduction doit être entre 1 et 90 %');if(!(du>0))return toast('Choisis une durée');
+   var l=F().filter(function(x){return +x.until>Date.now()&&String(x.pid)!==String(pid)});l.push({pid:isNaN(+pid)?pid:+pid,pct:pc,until:Date.now()+du*36e5});
+   if(l.length>8)return toast('8 ventes flash maximum en même temps');save(l);try{render()}catch(_){}return view('Vente flash lancée ✓ Pense à prévenir tes clients.')}
+  if(b.hasAttribute('data-flx')){var id=b.dataset.flx;save(F().filter(function(x){return String(x.pid)!==String(id)&&+x.until>Date.now()}));try{render()}catch(_){}return view('Vente flash arrêtée.')}
+  if(b.hasAttribute('data-fln'))return notify(b.dataset.fln)},true);
+ window.__fl={view:view,amount:amount,act:act,cd:cd};
 })();
 </script>
 <style id="oacss">
