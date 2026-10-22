@@ -2132,7 +2132,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='22 oct. · 02h40 · Son prise';
+var APP_V='22 oct. · 02h25 · Son électrique';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -2373,24 +2373,28 @@ body.lite :not(.ov):not(.ov *):not(.ckov):not(.ckov *){animation-iteration-count
  var IA_KEY={'Pluie de gouttes':'drops','Vagues lumineuses':'waves','Scanner laser':'scan','Feux d’artifice':'fire','Pluie numérique':'matrix','Rideau qui s’ouvre':'curtain','Bulles qui montent':'bubbles','Glitch néon':'glitch','Battement de cœur':'beat','Pluie de strass':'leaves','Fumée colorée':'smoke','Onde sonar':'sonar','Logo qui tourne':'spin','Néon qui s’allume':'neon','Explosion':'boom','Rebond':'drop','Lettres du nom':'letters','Aucun':'none','Branchement (prise)':'plug'};
  try{var itI=null;CSEC.forEach(function(s){s.items.forEach(function(i){if(i.k==='intro')itI=i})});if(itI){itI.d='Choisis l’animation d’ouverture de ta boutique (touche « Aperçu » pour la voir).';itI.f.forEach(function(f){if(f.n==='style'){f.o=IA_OPT;f.d=IA_OPT[0]}});if(!itI.f.some(function(f){return f.n==='snd'}))itI.f.push({n:'snd',l:'Son de branchement (animation « Branchement »)',t:'chk',d:true})}}catch(e){}
  function iaName(){try{var n=cfgV('intro').style;return IA_KEY[n]?n:IA_OPT[0]}catch(e){return IA_OPT[0]}}
- /* son « branchement » fabriqué sur place (aucun fichier, aucun droit d'auteur) : glissement, clac, étincelle électrique */
+ /* son « branchement » fabriqué sur place (aucun fichier, aucun droit d'auteur) : frottement, CLIC sec de la prise, décharge électrique */
  var AC=null;
+ function plugBuild(AC,out,t){
+  /* bruit d'électricité : éclair de contact, arc électrique qui crépite, ronflement du courant 50/100 Hz qui s'éteint */
+  function noise(d){var n=Math.floor(AC.sampleRate*d),b=AC.createBuffer(1,n,AC.sampleRate),x=b.getChannelData(0);for(var i=0;i<n;i++)x[i]=Math.random()*2-1;var s=AC.createBufferSource();s.buffer=b;return s}
+  var c=t+.7,D=.95,m=AC.createGain();m.gain.value=1;m.connect(out);
+  /* éclair de contact : balayage aigu → grave */
+  var z=AC.createOscillator(),zg=AC.createGain();z.type='sawtooth';z.frequency.setValueAtTime(5200,c);z.frequency.exponentialRampToValueAtTime(240,c+.09);zg.gain.setValueAtTime(.0001,c);zg.gain.linearRampToValueAtTime(.5,c+.005);zg.gain.exponentialRampToValueAtTime(.001,c+.14);z.connect(zg);zg.connect(m);z.start(c);z.stop(c+.16);
+  /* arc qui crépite : impulsions de bruit aigu irrégulières */
+  var n=noise(D),nf=AC.createBiquadFilter(),ng=AC.createGain();nf.type='highpass';nf.frequency.value=2500;ng.gain.setValueAtTime(.0001,c);
+  var tt=c+.01;while(tt<c+D-.05){var k=1-(tt-c)/D;ng.gain.setValueAtTime(.12+Math.random()*.9*k*k+.05,tt);ng.gain.linearRampToValueAtTime(.02,tt+.008+Math.random()*.012);tt+=.012+Math.random()*.03*(1.4-k)}
+  ng.gain.linearRampToValueAtTime(0,c+D);n.connect(nf);nf.connect(ng);ng.connect(m);n.start(c);n.stop(c+D+.02);
+  /* ronflement du courant : 100 Hz saturé + 50 Hz, tremblotant, qui s'éteint */
+  var hg=AC.createGain();hg.gain.setValueAtTime(.0001,c);hg.gain.linearRampToValueAtTime(.55,c+.03);hg.gain.setValueAtTime(.55,c+.35);hg.gain.exponentialRampToValueAtTime(.002,c+D);
+  var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;lp.connect(hg);hg.connect(m);
+  var h1=AC.createOscillator(),h2=AC.createOscillator(),g1=AC.createGain(),g2=AC.createGain();h1.type='square';h2.type='sawtooth';h1.frequency.value=100;h2.frequency.value=50;g1.gain.value=.3;g2.gain.value=.45;
+  var tr=AC.createOscillator(),trg=AC.createGain();tr.frequency.value=14;trg.gain.value=.12;tr.connect(trg);trg.connect(hg.gain);
+  h1.connect(g1);g1.connect(lp);h2.connect(g2);g2.connect(lp);[h1,h2,tr].forEach(function(o){o.start(c);o.stop(c+D+.03)})}
  function plugSnd(){try{var on=true;try{on=cfgV('intro').snd!==false}catch(e){}if(!on)return;var AX=window.AudioContext||window.webkitAudioContext;if(!AX)return;if(!AC)AC=new AX();
   if(AC.state==='suspended'){var p=AC.resume();if(p&&p.catch)p.catch(function(){})}
-  var t=AC.currentTime+.02,g=AC.createGain();g.gain.value=.5;g.connect(AC.destination);
-  function noise(d){var n=Math.floor(AC.sampleRate*d),b=AC.createBuffer(1,n,AC.sampleRate),x=b.getChannelData(0);for(var i=0;i<n;i++)x[i]=Math.random()*2-1;var s=AC.createBufferSource();s.buffer=b;return s}
-  /* 1. glissement des deux pièces qui se rapprochent */
-  var w=noise(.7),f=AC.createBiquadFilter(),e=AC.createGain();f.type='bandpass';f.Q.value=2.5;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(2400,t+.7);
-  e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(.35,t+.55);e.gain.linearRampToValueAtTime(0,t+.72);w.connect(f);f.connect(e);e.connect(g);w.start(t);w.stop(t+.75);
-  /* 2. clac sec du contact (à 0,74 s) */
-  var c=t+.74,o=AC.createOscillator(),oe=AC.createGain();o.type='sine';o.frequency.setValueAtTime(220,c);o.frequency.exponentialRampToValueAtTime(70,c+.12);
-  oe.gain.setValueAtTime(.9,c);oe.gain.exponentialRampToValueAtTime(.001,c+.18);o.connect(oe);oe.connect(g);o.start(c);o.stop(c+.2);
-  var k=noise(.05),kf=AC.createBiquadFilter(),ke=AC.createGain();kf.type='highpass';kf.frequency.value=1800;ke.gain.setValueAtTime(.8,c);ke.gain.exponentialRampToValueAtTime(.001,c+.05);k.connect(kf);kf.connect(ke);ke.connect(g);k.start(c);k.stop(c+.06);
-  /* 3. étincelle électrique + petit ronflement qui monte */
-  var z=AC.createOscillator(),ze=AC.createGain();z.type='sawtooth';z.frequency.setValueAtTime(90,c+.02);z.frequency.exponentialRampToValueAtTime(1500,c+.3);
-  ze.gain.setValueAtTime(.0001,c);ze.gain.linearRampToValueAtTime(.22,c+.04);ze.gain.exponentialRampToValueAtTime(.001,c+.42);z.connect(ze);ze.connect(g);z.start(c);z.stop(c+.45);
-  var h=AC.createOscillator(),he=AC.createGain();h.type='triangle';h.frequency.setValueAtTime(440,c+.05);h.frequency.exponentialRampToValueAtTime(880,c+.5);
-  he.gain.setValueAtTime(.0001,c+.05);he.gain.linearRampToValueAtTime(.18,c+.12);he.gain.exponentialRampToValueAtTime(.001,c+.8);h.connect(he);he.connect(g);h.start(c+.05);h.stop(c+.85)}catch(e){}}
+  var g=AC.createGain();g.gain.value=.7;g.connect(AC.destination);plugBuild(AC,g,AC.currentTime+.02)}catch(e){}}
+ window.__plugBuild=plugBuild;
  window.__plugSnd=plugSnd;
  function iaBuild(key,host){var o=document.createElement('div');o.className='iaov';var h='',i;
   if(key==='drops'){for(i=0;i<16;i++)h+='<i class="dp" style="left:'+(3+i*6)+'%;animation-duration:'+(2.2+(i*7)%20/10)+'s;animation-delay:-'+((i*13)%25/10)+'s;transform-origin:50% 0"></i>'}
