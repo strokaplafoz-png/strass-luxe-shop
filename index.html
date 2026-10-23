@@ -2132,7 +2132,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='23 oct. · 14h30 · Adresse suggérée';
+var APP_V='23 oct. · 15h40 · PCS somme exacte';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -4101,6 +4101,42 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   try{if(window.VILLE_OK)VILLE_OK()}catch(x){}
   return}
  if(!(e.target.closest&&e.target.closest('#ca,#ads')))close()},true);
+})();
+</script>
+<script>
+/* ---- PCS : le client voit quels tickets prendre pour que, frais PCS déduits, le vendeur reçoive sa commande ---- */
+(function(){
+var MSG='Nous voulons exactement la somme du produit : {montant}. Si le montant reçu n’est pas celui du produit, nous ne pourrons pas te donner le produit.',RASS='Les frais de PCS sont retirés par PCS, pas par nous : on te dit exactement quels tickets prendre.',SURP='Si un surplus reste, le vendeur t’explique par message comment il est géré.',ID='pcsfee',DEF='20 | 18.60\n50 | 46.50\n100 | 93\n150 | 139.50\n200 | 190\n250 | 237.50';
+try{var sx=CSEC.find(function(x){return x.items.some(function(i){return i.k==='abd'})})||CSEC.find(function(x){return x.id==='fd'})||CSEC[0];
+ if(sx&&!sx.items.some(function(i){return i.k===ID}))sx.items.push({k:ID,tg:1,def:1,ic:'🎫',t:'Tickets PCS (frais déduits)',d:'Quand le client paie en PCS, l’app lui dit quels tickets prendre pour que, une fois les frais PCS retirés, tu reçoives au moins le montant de sa commande. Une ligne par ticket : montant du ticket | montant crédité après frais. Change les chiffres si PCS modifie ses frais.',f:[{n:'msg',l:'Message affiché au client quand il choisit PCS ({montant} = total de la commande)',t:'ta',d:MSG},{n:'sug',l:'Aussi proposer au client les tickets à prendre (calcul avec le barème ci-dessous)',t:'chk',d:0},{n:'tarif',l:'Tickets (ticket | crédité)',t:'lines',d:DEF},{n:'rass',l:'Texte rassurant (si les tickets sont proposés)',t:'ta',d:RASS},{n:'surp',l:'Ce que tu fais du surplus (si les tickets sont proposés)',t:'ta',d:SURP}]})}catch(e){}
+function conf(){try{return cfgV(ID)}catch(e){return{on:true,tarif:DEF}}}
+function tab(){var c=conf();if(c.on===false)return[];var t=String(c.tarif||DEF).split('\n'),o=[];
+ t.forEach(function(l){var m=l.match(/(\d+(?:[.,]\d+)?)\s*[|;:=>-]+\s*(\d+(?:[.,]\d+)?)/);if(!m)return;var a=Math.round(parseFloat(m[1].replace(',','.'))*100),b=Math.round(parseFloat(m[2].replace(',','.'))*100);if(a>0&&b>0&&b<=a&&!o.some(function(x){return x.g===a}))o.push({g:a,n:b})});
+ return o.sort(function(x,y){return x.g-y.g})}
+function best(T,tk){var B=null,n=tk.length;if(!n||T<=0)return null;
+ function rec(i,k,left,g,nt,cnt){if(nt>=T){var ex=nt-T;if(!B||ex<B.ex||(ex===B.ex&&(g<B.g||(g===B.g&&k<B.k))))B={ex:ex,g:g,n:nt,k:k,c:Object.assign({},cnt)};return}
+  if(k>=left||i>=n)return;
+  for(var j=i;j<n;j++){cnt[j]=(cnt[j]||0)+1;rec(j,k+1,left,g+tk[j].g,nt+tk[j].n,cnt);cnt[j]--;if(!cnt[j])delete cnt[j]}}
+ rec(0,0,4,0,0,{});if(!B)for(var m=5;m<=8;m++){rec(0,0,m,0,0,{});if(B)break}
+ return B}
+function fm(c){var v=c/100;try{return v.toLocaleString('fr-FR',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})+' €'}catch(e){return v+' €'}}
+function sel(){var x=document.querySelector('input[name=pay]:checked');return x?x.value:''}
+function calc(){var T=0;try{T=Math.round(cartCtx().T.tot*100)}catch(e){}if(!(T>0))return null;var sug=conf().sug===true,tk=sug?tab():[];return{T:T,sug:sug&&tk.length>0,b:sug&&tk.length?best(T,tk):null,tk:tk}}
+function E2(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function html(r){var c=conf(),m=String(c.msg===undefined?MSG:c.msg).trim().replace(/\{montant\}/g,fm(r.T)),top='<b>🎫 Paiement PCS</b>'+(m?'<br>'+E2(m):'');if(!r.sug)return top;return top+'<br><br>'+html2(r)}
+function html2(r){if(!r.b)return'<b>🎫 Commande trop élevée pour un paiement PCS</b><br>Choisis un autre moyen de paiement ou contacte le vendeur.';
+ var l=Object.keys(r.b.c).map(function(j){return'• '+r.b.c[j]+' ticket'+(r.b.c[j]>1?'s':'')+' de <b>'+fm(r.tk[j].g)+'</b>'}).join('<br>');
+ return'<b>🎫 Pour ta commande de '+fm(r.T)+', prends :</b><br>'+l+'<br><small>Tu paies '+fm(r.b.g)+' de tickets. Après les frais PCS, '+fm(r.b.n)+' sont crédités.'+(r.b.ex>0?' Surplus de '+fm(r.b.ex)+' (les tickets n’existent qu’en montants fixes).':'')+'</small>'+extra(r.b.ex>0)}
+function extra(sur){var c=conf(),o='',a=String(c.rass===undefined?RASS:c.rass).trim(),b=String(c.surp===undefined?SURP:c.surp).trim();if(a)o+='<br><small>🔒 '+E2(a)+'</small>';if(sur&&b)o+='<br><small>ℹ️ '+E2(b)+'</small>';return o}
+function note(r){if(!r)return'';if(!r.sug)return'montant exact demandé '+fm(r.T)+' (crédité après frais)';if(!r.b)return'';var l=Object.keys(r.b.c).map(function(j){return r.b.c[j]+'x'+fm(r.tk[j].g)}).join(' + ');return'tickets '+l+' (payé '+fm(r.b.g)+', crédité '+fm(r.b.n)+' pour '+fm(r.T)+')'}
+function upd(){var w=document.querySelector('#pcw');if(!w||w.hidden||sel()!=='pcs'){window.__pcsNote='';var o=document.querySelector('#pcinfo');if(o)o.remove();return}
+ var r=calc();window.__pcsNote=note(r);var el=document.querySelector('#pcinfo');
+ if(!r){if(el)el.remove();return}
+ var h=html(r);if(!el){el=document.createElement('div');el.id='pcinfo';el.style.cssText='margin:8px 0;padding:10px 12px;border:1px solid #2a4fb0;border-radius:12px;background:#0d1330;font-size:14px;line-height:1.5';w.insertBefore(el,w.firstChild)}
+ if(el.dataset.h!==h){el.innerHTML=h;el.dataset.h=h}}
+document.addEventListener('change',function(e){if(e.target&&e.target.name==='pay')setTimeout(upd,30)});
+setInterval(upd,700);
+var _on=ocNote;ocNote=function(){var r=_on.apply(this,arguments);try{if(sel()==='pcs'&&window.__pcsNote)r+='\n[PCS] '+window.__pcsNote}catch(e){}return r};
 })();
 </script>
 <style id="capcss">
