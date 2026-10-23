@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>STRASS LUXE SHOP</title><meta name="theme-color" content="#04050a"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://tile.openstreetmap.org https://tiles.openfreemap.org https://tile.openstreetmap.org https://tiles.openfreemap.org; media-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api-adresse.data.gouv.fr https://router.project-osrm.org https://routing.openstreetmap.de https://tiles.openfreemap.org https://cdn.jsdelivr.net; worker-src blob:; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><script src="config.js"></script>
+<title>STRASS LUXE SHOP</title><meta name="theme-color" content="#04050a"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://tile.openstreetmap.org https://tiles.openfreemap.org https://tile.openstreetmap.org https://tiles.openfreemap.org; media-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api-adresse.data.gouv.fr https://data.geopf.fr https://router.project-osrm.org https://routing.openstreetmap.de https://tiles.openfreemap.org https://cdn.jsdelivr.net; worker-src blob:; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><script src="config.js"></script>
 <style>
 :root{--bg:#04050a;--card:#0c1222;--card2:#111a33;--blue:#2f6bff;--glow:#3db2ff;--tx:#eef3ff;--mu:#8b9cc4;--ok:#35e0a1;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -2132,7 +2132,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='cv')VILLE_OK()});
 
 /* ---- repère de version (visible seulement pour le propriétaire connecté) ---- */
-var APP_V='22 oct. · 02h25 · Son électrique';
+var APP_V='23 oct. · 14h30 · Adresse suggérée';
 (function(){const el=document.createElement('div');el.id='appv';el.style.cssText='position:fixed;left:8px;bottom:4px;z-index:5;font-size:9px;opacity:.55;color:#9fb4e8;pointer-events:none;display:none';el.textContent='v. '+APP_V;document.body.appendChild(el);
  setInterval(()=>{try{el.style.display=(IS_ADMIN&&!document.querySelector('#ovA.show'))?'block':'none'}catch(e){}},1500)})();
 
@@ -3978,13 +3978,13 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
  function ago(s){return s<60?s+' s':Math.round(s/60)+' min'}
  function dist(a,b,c,d){var R=6371000,r=Math.PI/180,x=Math.sin((c-a)*r/2),y=Math.sin((d-b)*r/2),h=x*x+Math.cos(a*r)*Math.cos(c*r)*y*y;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
  function num(id){var m=String(id).match(/^(?:CMD-)?(\d+)$/);return m?+m[1]:null}
- function rpc(n,a){return Promise.resolve(sb.rpc(n,a)).then(function(r){if(r&&r.error)throw new Error(r.error.message||'Erreur');return r?r.data:null})}
+ function rpc(n,a){if(typeof sb==='undefined'||!sb)return Promise.reject(new Error('hors ligne'));return Promise.resolve(sb.rpc(n,a)).then(function(r){if(r&&r.error)throw new Error(r.error.message||'Erreur');return r?r.data:null})}
  function getPos(){return new Promise(function(ok,ko){if(!navigator.geolocation)return ko(new Error('Ton téléphone ne permet pas la localisation ici.'));
    navigator.geolocation.getCurrentPosition(ok,function(e){ko(new Error(e&&e.code===1?'Autorisation de localisation refusée : autorise-la dans les réglages de Telegram.':'Position introuvable : active le GPS et réessaie.'))},GEO)})}
  /* géocodage de l'adresse du client (base nationale d'adresses, France) */
  function geocode(o){var q=[o.address,o.zip,o.city].filter(Boolean).join(' ');if(!q||o.city==='Meetup')return Promise.resolve(null);
   var ctl=window.AbortController?new AbortController():null,tm=setTimeout(function(){try{ctl&&ctl.abort()}catch(e){}},7000);
-  return fetch('https://api-adresse.data.gouv.fr/search/?limit=1&q='+encodeURIComponent(q),ctl?{signal:ctl.signal}:{}).then(function(r){return r.json()}).then(function(j){clearTimeout(tm);var f=j&&j.features&&j.features[0];if(!f||!f.geometry||(f.properties&&f.properties.score<.4))return null;return{lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0]}}).catch(function(){clearTimeout(tm);return null})}
+  return fetch('https://data.geopf.fr/geocodage/search/?limit=1&q='+encodeURIComponent(q),ctl?{signal:ctl.signal}:{}).then(function(r){return r.json()}).then(function(j){clearTimeout(tm);var f=j&&j.features&&j.features[0];if(!f||!f.geometry||(f.properties&&f.properties.score<.4))return null;return{lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0]}}).catch(function(){clearTimeout(tm);return null})}
  /* ----- moteur GPS (démarre UNIQUEMENT sur un appui, jamais tout seul, jamais mémorisé) ----- */
  function wake(){try{if(navigator.wakeLock&&!GP.wl)navigator.wakeLock.request('screen').then(function(l){GP.wl=l;l.addEventListener('release',function(){GP.wl=null})}).catch(function(){})}catch(e){}}
  function unwake(){try{GP.wl&&GP.wl.release()}catch(e){}GP.wl=null}
@@ -4057,6 +4057,50 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   else if(a==='radii'){rpc('dlv_cfg_set',{p_lat:null,p_lng:null,p_home_r:+document.getElementById('gcr').value||null,p_arrive_r:+document.getElementById('gca').value||null}).then(function(){T_('Rayons enregistrés ✓');cfgView()}).catch(function(er){T_(er.message)})}
   else if(a==='test'){var o=document.getElementById('gct');o.textContent='Je cherche ta position…';getPos().then(function(p){return rpc('dlv_zone_test',{p_lat:p.coords.latitude,p_lng:p.coords.longitude,p_acc:p.coords.accuracy})}).then(function(r){o.innerHTML=!r.set?'⚠️ Définis d’abord ton domicile.':r.hidden?'🔒 <b>MASQUÉE</b> : tu es dans la zone privée (à ~'+r.dist+' m du centre, rayon '+r.home_r+' m). Le client ne verrait rien.':'📡 <b>PARTAGÉE</b> : tu es hors zone (à ~'+r.dist+' m du centre, rayon '+r.home_r+' m).'}).catch(function(er){o.textContent=er.message})}},true);
  window.__gps={GP:GP,start:start,loop:loop,halt:halt};
+})();
+</script>
+<script>
+/* ---- adresse : le client tape sa rue, il clique sur une suggestion (adresse + code postal + ville) ---- */
+(function(){
+var URL_='https://data.geopf.fr/geocodage/search/',tm=0,ctl=null,cache={},skip=0,last='';
+function esc2(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim()}
+function frOk(){var y=document.querySelector('#cy');if(!y)return true;var v=norm(y.value);return v===''||v==='france'}
+function close(){var b=document.querySelector('#ads');if(b)b.remove()}
+function show(list){var ca=document.querySelector('#ca');if(!ca||document.activeElement!==ca){return}
+ var box=document.querySelector('#ads');
+ if(!list.length){if(box)box.remove();return}
+ if(!box){box=document.createElement('div');box.id='ads';box.style.cssText='margin:4px 0 8px';ca.insertAdjacentElement('afterend',box)}
+ box.innerHTML=list.map(function(a,i){return '<button type="button" data-apick="'+i+'" style="display:block;width:100%;text-align:left;padding:10px 12px;margin:4px 0;border-radius:12px;background:#0d1330;border:1px solid #2a4fb0;color:#fff;font-size:15px">'+esc2(a.l)+' <small style="color:var(--mu)">'+esc2(a.z+' '+a.c)+'</small></button>'}).join('');
+ box._l=list}
+function parse(j){var out=[],f=(j&&j.features)||[];
+ for(var i=0;i<f.length;i++){var p=f[i].properties||{};var l=p.name||'',z=p.postcode||'',c=p.city||'';
+  if(!l||!/^\d{5}$/.test(z)||!c)continue;
+  if(out.some(function(x){return x.l===l&&x.z===z&&x.c===c}))continue;
+  out.push({l:l,z:z,c:c})}
+ return out.slice(0,5)}
+function ask(q){
+ if(cache[q]){show(cache[q]);return}
+ if(ctl)try{ctl.abort()}catch(e){}
+ ctl=typeof AbortController==='function'?new AbortController():null;
+ var tt=setTimeout(function(){if(ctl)try{ctl.abort()}catch(e){}},6000);
+ fetch(URL_+'?limit=5&autocomplete=1&q='+encodeURIComponent(q),ctl?{signal:ctl.signal}:{}).then(function(r){return r.json()}).then(function(j){clearTimeout(tt);var l=parse(j);cache[q]=l;if(q===last)show(l)}).catch(function(){clearTimeout(tt)})}
+document.addEventListener('input',function(e){if(!e.target||e.target.id!=='ca')return;
+ if(Date.now()<skip)return;clearTimeout(tm);
+ var q=e.target.value.trim();last=q;
+ if(q.length<4||!frOk()){close();return}
+ tm=setTimeout(function(){ask(q)},280)});
+document.addEventListener('focusin',function(e){if(e.target&&e.target.id==='ca'&&e.target.value.trim().length>=4&&frOk()&&cache[e.target.value.trim()]){last=e.target.value.trim();show(cache[last])}});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-apick]');
+ if(b){e.preventDefault();e.stopPropagation();var box=document.querySelector('#ads'),a=box&&box._l&&box._l[+b.dataset.apick];if(!a)return;
+  var ca=document.querySelector('#ca'),cz=document.querySelector('#cz'),cv=document.querySelector('#cv'),cy=document.querySelector('#cy');
+  skip=Date.now()+800;
+  function set(el,v){if(!el)return;el.value=v;el.classList.remove('bad');var er=document.querySelector('#e-'+el.id);if(er)er.textContent='';try{el.dispatchEvent(new Event(el.id==='ca'?'input':'change',{bubbles:true}))}catch(x){}}
+  set(ca,a.l);set(cz,a.z);set(cv,a.c);if(cy&&!cy.value.trim())set(cy,'France');
+  close();var v=document.querySelector('#vls');if(v)v.remove();
+  try{if(window.VILLE_OK)VILLE_OK()}catch(x){}
+  return}
+ if(!(e.target.closest&&e.target.closest('#ca,#ads')))close()},true);
 })();
 </script>
 <style id="capcss">
@@ -4140,7 +4184,7 @@ body.lite nav#nav button[data-v=cart].abd span{animation:none}
   // description -> puces
   var nt=S.querySelector('p.note');if(nt&&(p.d||'').indexOf('\n')>=0){var ul=document.createElement('ul');ul.className='psd';String(p.d).split(/\n+/).map(function(x){return x.replace(/^[\s\-•·]+/,'').trim()}).filter(Boolean).forEach(function(x){var li=document.createElement('li');li.textContent=x;ul.appendChild(li)});nt.replaceWith(ul)}
   // variantes -> tuiles
-  var ch=S.querySelector('.chips');if(ch&&S.querySelector('[data-vr]')){ch.className='pvt';ch.removeAttribute('style');ch.querySelectorAll('[data-vr]').forEach(function(b){if(!b.querySelector('b')){var n=b.textContent;b.innerHTML='<span></span><b>'+eur(p.p)+'</b>';b.firstChild.textContent=n}})}
+  var ch=S.querySelector('.chips');if(ch&&S.querySelector('[data-vr]')){ch.className='pvt';ch.removeAttribute('style');ch.querySelectorAll('[data-vr]').forEach(function(b){if(!b.querySelector('b')){var n=b.textContent;var pp=p.p;try{if(typeof PV==='function')pp=PV(p,b.dataset.vr)}catch(e){}b.innerHTML='<span></span><b>'+eur(pp)+'</b>';b.firstChild.textContent=n}})}
   // boutons
   var add=S.querySelector('[data-addq]');if(add){add.className='pbt add';add.innerHTML=CART+'<span>Ajouter au panier</span>'}
   var anchor=add||S.querySelector('button[disabled]');
